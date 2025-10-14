@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import AuthContext from "@/context/AuthContext";
+import { MessageProvider } from "@/context/MessageContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import "./globals.css";
+import ThemeWrapper from "@/components/ThemeWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,11 +27,42 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme');
+                  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  
+                  if (theme === 'dark' || (!theme && systemPrefersDark)) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {
+                  // Silent fail for SSR
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased text-gray-900 dark:text-gray-100 transition-colors duration-200`}
+        suppressHydrationWarning
       >
-        {children}
+        <AuthContext>
+          <MessageProvider>
+            <ThemeProvider>
+              <ThemeWrapper>
+                {children}
+              </ThemeWrapper>
+            </ThemeProvider>
+          </MessageProvider>
+        </AuthContext>
       </body>
     </html>
   );

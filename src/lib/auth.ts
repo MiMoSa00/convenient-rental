@@ -1,0 +1,32 @@
+import NextAuth from "next-auth";
+import type { NextAuthOptions } from "next-auth";
+// Add your providers here (example with Google)
+import GoogleProvider from "next-auth/providers/google";
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    // Add other providers as needed
+  ],
+  callbacks: {
+    async session({ session, token }) {
+      // Customize session object if needed
+      return session;
+    },
+    async jwt({ token, user }) {
+      // Customize JWT token if needed
+      return token;
+    },
+  },
+  pages: {
+    signIn: "/login",
+    // Add other custom pages if needed
+  },
+};
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

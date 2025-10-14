@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+.bg-grid-pattern {
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+/* Use explicit color values here — avoid using Tailwind's theme() helper inside raw CSS. */
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+  --transition-duration: 0.15s;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* When the `dark` class is on the html element, override variables. */
+html.dark {
+  --background: #000000; /* pure black */
+  --foreground: #ffffff; /* pure white */
 }
 
-body {
-  background: var(--background);
+/* Smooth theme transitions */
+* {
+  transition: background-color var(--transition-duration) ease-in-out,
+              border-color var(--transition-duration) ease-in-out,
+              color var(--transition-duration) ease-in-out;
+}
+
+/* Compatibility override: many components use `bg-white` without a `dark:` variant.
+   When the site is in dark mode, make those elements use the dark background.
+   This is a temporary, minimal fix — ideally update components to include
+   `dark:bg-*` classes explicitly. */
+html.dark [class*="bg-white"] {
+  background-color: var(--background) !important;
+}
+
+/* Also cover some other common light backgrounds used across the project */
+html.dark [class*="bg-gray-50"] {
+  background-color: var(--background) !important;
+}
+
+/* Ensure the html/body use the CSS variable as the canonical page background */
+html, body {
+  background-color: var(--background);
   color: var(--foreground);
+}
+
+/* Force common gray text utility classes to render white in dark mode so
+   components that didn't add dark: variants still appear readable. */
+html.dark [class*="text-gray-"] {
+  color: var(--foreground) !important;
+}
+
+
+/* Let Tailwind utilities handle background colors; keep the body font settings. */
+body {
   font-family: Arial, Helvetica, sans-serif;
 }

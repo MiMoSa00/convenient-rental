@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int               @id @default(autoincrement())
+  name             String
+  email            String            @unique
+  password         String
+  createdAt        DateTime          @default(now())
+  listings         Listing[]
+  reviews          Review[]
+  roommateRequests RoommateRequest[]
+  isPremium        Boolean           @default(false)
+  
+  // User profile fields
+  age              Int?
+  gender           String?
+  occupation       String?
+  bio              String?
+  interests        String[]          @default([])
+  location         String?
+  profileImage     String?
+  preferences      Json?
+  
+  // Location fields for nearby searches
+  latitude         Float?
+  longitude        Float?
+  lookingForRoommate Boolean         @default(false)
+}
+
+model Listing {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  price       Float
+  location    String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  reviews     Review[]
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  rating      Int
+  comment     String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  listingId   Int
+}
+
+model RoommateRequest {
+  id                Int             @id @default(autoincrement())
+  user              User            @relation(fields: [userId], references: [id])
+  userId            Int
+  budget            Float
+  moveInDate        DateTime
+  duration          Int             // Length of stay in months
+  lifestyle         String[]        // Array of lifestyle preferences
+  location          String          // Preferred areas
+  cleaningHabits    String
+  smokingTolerance  String
+  petPreference     String
+  workSchedule      String
+  guestHabits       String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  status            String          @default("ACTIVE") // ACTIVE, MATCHED, CLOSED
+  matches           RoommateMatch[] @relation("RequestOne")
+  matchedWith       RoommateMatch[] @relation("RequestTwo")
+}
+
+model RoommateMatch {
+  id                  Int             @id @default(autoincrement())
+  requestOne          RoommateRequest @relation("RequestOne", fields: [requestOneId], references: [id])
+  requestOneId        Int
+  requestTwo          RoommateRequest @relation("RequestTwo", fields: [requestTwoId], references: [id])
+  requestTwoId        Int
+  compatibilityScore  Float
+  status              String          @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@unique([requestOneId, requestTwoId])
+}
+
+model PremiumFeature {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
+}
+
+model Property {
+  id             Int      @id @default(autoincrement())
+  title          String
+  type           String   // house, apartment, condo, townhouse
+  price          Float
+  address        String
+  latitude       Float
+  longitude      Float
+  images         String[] @default([])
+  beds           Int
+  baths          Int
+  description    String
+  amenities      String[] @default([])
+  availableFrom  DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  isAvailable    Boolean  @default(true)
+  
+  // Optional: Add relationship to User if properties are owned by users
+  // owner          User?    @relation(fields: [ownerId], references: [id])
+  // ownerId        Int?
+}
