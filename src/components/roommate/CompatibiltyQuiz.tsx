@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Check, User, Home, Heart, Briefcase, Moon, Users } from 'lucide-react';
-
-// Import types from the main types file
+import { useSession } from 'next-auth/react';
 import { RoommateProfile, Question, QuizStep } from '@/types/roommate';
 
-// Progress Bar Component
 const ProgressBar: React.FC<{ current: number; total: number }> = ({ current, total }) => {
   const percentage = (current / total) * 100;
   return (
@@ -23,13 +21,13 @@ interface CompatibilityQuizProps {
 }
 
 const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCancel }) => {
+  const { data: session } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [budgetRange, setBudgetRange] = useState({ min: 150000, max: 500000 }); // Changed to naira values
+  const [budgetRange, setBudgetRange] = useState({ min: 150000, max: 500000 });
   const [ageValue, setAgeValue] = useState(22);
 
-  // Scroll to top function
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -37,57 +35,54 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
     });
   };
 
-  // Storage functions
-  const saveToStorage = (key: string, data: any) => {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(key, JSON.stringify(data));
-      }
-    } catch (error) {
-      console.error('Storage error:', error);
-    }
+  // Generate user-scoped localStorage keys
+  const getUserScopedKey = (baseKey: string): string => {
+    const userId = session?.user?.id || 'anonymous';
+    return `${baseKey}_${userId}`;
   };
 
-  const getFromStorage = (key: string) => {
-    try {
-      if (typeof window !== 'undefined') {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : null;
-      }
-    } catch (error) {
-      console.error('Storage error:', error);
-    }
-    return null;
-  };
-
-  // Load saved progress
+  // Load saved progress with user scoping
   useEffect(() => {
-    const savedProgress = getFromStorage('roommate_quiz_progress');
+    if (!session?.user?.id) return;
+
+    const progressKey = getUserScopedKey('roommate_quiz_progress');
+    const savedProgress = localStorage.getItem(progressKey);
+    
     if (savedProgress) {
-      setCurrentStep(savedProgress.step);
-      setAnswers(savedProgress.answers);
-      if (savedProgress.answers.budget) {
-        setBudgetRange(savedProgress.answers.budget);
-      }
-      if (savedProgress.answers.age) {
-        setAgeValue(savedProgress.answers.age);
+      try {
+        const parsed = JSON.parse(savedProgress);
+        setCurrentStep(parsed.step || 0);
+        setAnswers(parsed.answers || {});
+        if (parsed.answers.budget) {
+          setBudgetRange(parsed.answers.budget);
+        }
+        if (parsed.answers.age) {
+          setAgeValue(parsed.answers.age);
+        }
+      } catch (error) {
+        console.error('Error loading saved progress:', error);
       }
     }
-  }, []);
+  }, [session?.user?.id]);
 
-  // Save progress
+  // Save progress whenever answers change
   useEffect(() => {
-    if (Object.keys(answers).length > 0) {
-      saveToStorage('roommate_quiz_progress', { step: currentStep, answers });
+    if (Object.keys(answers).length > 0 && session?.user?.id) {
+      const progressKey = getUserScopedKey('roommate_quiz_progress');
+      localStorage.setItem(progressKey, JSON.stringify({ 
+        step: currentStep, 
+        answers,
+        userId: session.user.id,
+        lastUpdated: new Date().toISOString()
+      }));
     }
-  }, [currentStep, answers]);
+  }, [currentStep, answers, session?.user?.id]);
 
   // Scroll to top when step changes
   useEffect(() => {
     scrollToTop();
   }, [currentStep]);
 
-  // Helper function to map UI values to profile values
   const mapValueToProfile = (option: string, field: keyof RoommateProfile): any => {
     const mappings: Record<string, Record<string, any>> = {
       gender: {
@@ -159,7 +154,6 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
       return fieldMappings[option];
     }
     
-    // For arrays (sharedActivities, dealBreakers), return the kebab-case version
     return option;
   };
 
@@ -361,27 +355,23 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
     if (field === 'age') setAgeValue(value);
   };
 
-  // Enhanced next step function with scroll
   const handleNextStep = () => {
     setCurrentStep(currentStep + 1);
-    // The useEffect will handle the scroll automatically
   };
 
-  // Enhanced previous step function with scroll
   const handlePreviousStep = () => {
     setCurrentStep(currentStep - 1);
-    // The useEffect will handle the scroll automatically
   };
 
   const convertAnswersToProfile = (): RoommateProfile => {
     const now = new Date();
     return {
       id: `profile_${Date.now()}`,
-      userId: `user_${Date.now()}`,
+      userId: session?.user?.id || `user_${Date.now()}`,
       age: answers.age || 22,
       gender: answers.gender || 'prefer-not-to-say',
       occupation: answers.occupation || '',
-      budget: answers.budget || { min: 150000, max: 500000 }, // Changed to naira values
+      budget: answers.budget || { min: 150000, max: 500000 },
       preferredGender: answers.preferredGender || 'any',
       location: answers.location || '',
       moveInDate: answers.moveInDate || '',
@@ -398,26 +388,32 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
       sharedActivities: answers.sharedActivities || [],
       dealBreakers: answers.dealBreakers || [],
       isComplete: true,
-      status: 'ACTIVE', // Added missing status property
+      status: 'ACTIVE',
       createdAt: now,
       updatedAt: now
     };
   };
 
   const handleSubmit = async () => {
+    if (!session?.user?.id) {
+      console.error('No user session');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const profile = convertAnswersToProfile();
+      const profileKey = getUserScopedKey('roommate_profile_data');
+      const progressKey = getUserScopedKey('roommate_quiz_progress');
       
-      // Save to localStorage
-      saveToStorage('roommate_profile', profile);
+      // Save complete profile to localStorage with user scoping
+      localStorage.setItem(profileKey, JSON.stringify(profile));
+      localStorage.setItem(getUserScopedKey('roommate_profile_timestamp'), new Date().toISOString());
       
-      // Clear quiz progress
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('roommate_quiz_progress');
-      }
+      // Clear quiz progress since it's complete
+      localStorage.removeItem(progressKey);
       
-      // Try to save to API (optional, will fail gracefully if no backend)
+      // Try to save to API (optional)
       try {
         await fetch('/api/roommate/profile', {
           method: 'POST',
@@ -436,7 +432,6 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
     }
   };
 
-  // Helper function to format naira currency
   const formatNaira = (amount: number): string => {
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
@@ -629,9 +624,8 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
   const isLastStep = currentStep === quizSteps.length - 1;
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-800 p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-800 p-4 sm:p-6">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
             Roommate Compatibility Quiz
@@ -639,7 +633,6 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
           <p className="text-gray-600">Find your perfect living match</p>
         </div>
 
-        {/* Progress */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-600">
@@ -652,9 +645,7 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
           <ProgressBar current={currentStep + 1} total={quizSteps.length} />
         </div>
 
-        {/* Quiz Card */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          {/* Step Header */}
           <div className="flex items-center mb-6">
             <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-xl text-white mr-4">
               {currentQuizStep.icon}
@@ -665,7 +656,6 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
             </div>
           </div>
 
-          {/* Questions */}
           <div className="space-y-8">
             {currentQuizStep.questions.map((question) => (
               <div key={question.id} className="space-y-4">
@@ -678,7 +668,6 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
             ))}
           </div>
 
-          {/* Navigation */}
           <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
             <div className="flex space-x-3">
               {currentStep > 0 && (

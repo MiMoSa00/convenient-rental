@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { Users, Heart, MessageSquare, Filter, Star, MapPin, Calendar, DollarSign, Briefcase } from "lucide-react";
 
@@ -12,6 +13,7 @@ import {
   clearProfile 
 } from "@/lib/roommate-storage";
 import { calculateCompatibility, generateMatches } from "@/lib/roommate-matching";
+// import CompatibilityQuiz from "@/components/roommate/CompatibilityQuiz";
 import CompatibilityQuiz from "@/components/roommate/CompatibiltyQuiz";
 import ProgressBar from "@/components/ui/ProgressBar";
 
@@ -72,7 +74,7 @@ const FindRoommatesContent = () => {
   const loadUserData = async () => {
     setIsLoading(true);
     try {
-      // Load user profile
+      // Load user profile from localStorage
       const profile = getProfile();
       setCurrentProfile(profile);
 
@@ -267,14 +269,14 @@ const FindRoommatesContent = () => {
 
   // Helper functions
   const generateNameFromProfile = (profile: RoommateProfile): string => {
-    const names = {
+    const names: Record<string, string> = {
       'demo_1': 'Sarah Johnson',
       'demo_2': 'Mike Chen',
       'demo_3': 'Emma Davis',
       'demo_4': 'Alex Rodriguez',
       'demo_5': 'Adaora Okafor'
     };
-    return names[profile.id as keyof typeof names] || 'Anonymous User';
+    return names[profile.id] || 'Anonymous User';
   };
 
   const generateInterestsFromProfile = (profile: RoommateProfile): string[] => {
@@ -289,7 +291,7 @@ const FindRoommatesContent = () => {
     if (profile.socialLevel === 'very-social') interests.push('Social');
     if (profile.studyHabits === 'quiet-studier') interests.push('Quiet');
     
-    return interests.slice(0, 3); // Limit to 3 interests for display
+    return interests.slice(0, 3);
   };
 
   // Event handlers
@@ -305,7 +307,6 @@ const FindRoommatesContent = () => {
   };
 
   const handleMessageClick = (match: DisplayMatch) => {
-    // Convert DisplayMatch to the format expected by openChat
     const roommateMatch = {
       id: match.profile.id,
       name: match.name,
@@ -334,26 +335,26 @@ const FindRoommatesContent = () => {
   // Filter matches based on current filters
   const filteredMatches = matches.filter(match => {
     if (filters.budgetRange !== 'any') {
-      const budgetRanges = {
+      const budgetRanges: Record<string, { min: number; max: number }> = {
         '200000-350000': { min: 200000, max: 350000 },
         '350000-500000': { min: 350000, max: 500000 },
         '500000-700000': { min: 500000, max: 700000 },
         '700000+': { min: 700000, max: 9999999 }
       };
-      const range = budgetRanges[filters.budgetRange as keyof typeof budgetRanges];
+      const range = budgetRanges[filters.budgetRange];
       if (range && (match.profile.budget.max < range.min || match.profile.budget.min > range.max)) {
         return false;
       }
     }
 
     if (filters.ageRange !== 'any') {
-      const ageRanges = {
+      const ageRanges: Record<string, { min: number; max: number }> = {
         '18-22': { min: 18, max: 22 },
         '23-27': { min: 23, max: 27 },
         '28-32': { min: 28, max: 32 },
         '33+': { min: 33, max: 99 }
       };
-      const range = ageRanges[filters.ageRange as keyof typeof ageRanges];
+      const range = ageRanges[filters.ageRange];
       if (range && (match.age < range.min || match.age > range.max)) {
         return false;
       }
@@ -681,12 +682,10 @@ const FindRoommatesContent = () => {
   );
 };
 
-const FindRoommates = () => {
+export default function RoommatesPage() {
   return (
     <MessageProvider>
       <FindRoommatesContent />
     </MessageProvider>
   );
-};
-
-export default FindRoommates;
+}

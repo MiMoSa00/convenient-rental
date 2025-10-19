@@ -14,8 +14,10 @@ model User {
   id               Int               @id @default(autoincrement())
   name             String
   email            String            @unique
-  password         String
+  password         String?
+  image            String?
   createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   listings         Listing[]
   reviews          Review[]
   roommateRequests RoommateRequest[]
@@ -31,6 +33,9 @@ model User {
   profileImage     String?
   preferences      Json?
   
+  // Settings - ADD THIS
+  settings         Json?             @default("{}")
+  
   // Location fields for nearby searches
   latitude         Float?
   longitude        Float?
@@ -44,7 +49,8 @@ model Listing {
   price       Float
   location    String
   createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
   reviews     Review[]
 }
@@ -54,15 +60,16 @@ model Review {
   rating      Int
   comment     String
   createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
-  listing     Listing  @relation(fields: [listingId], references: [id])
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId   Int
 }
 
 model RoommateRequest {
   id                Int             @id @default(autoincrement())
-  user              User            @relation(fields: [userId], references: [id])
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId            Int
   budget            Float
   moveInDate        DateTime
@@ -83,9 +90,9 @@ model RoommateRequest {
 
 model RoommateMatch {
   id                  Int             @id @default(autoincrement())
-  requestOne          RoommateRequest @relation("RequestOne", fields: [requestOneId], references: [id])
+  requestOne          RoommateRequest @relation("RequestOne", fields: [requestOneId], references: [id], onDelete: Cascade)
   requestOneId        Int
-  requestTwo          RoommateRequest @relation("RequestTwo", fields: [requestTwoId], references: [id])
+  requestTwo          RoommateRequest @relation("RequestTwo", fields: [requestTwoId], references: [id], onDelete: Cascade)
   requestTwoId        Int
   compatibilityScore  Float
   status              String          @default("PENDING") // PENDING, ACCEPTED, REJECTED
@@ -100,6 +107,8 @@ model PremiumFeature {
   name        String
   description String
   price       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Property {
@@ -123,4 +132,31 @@ model Property {
   // Optional: Add relationship to User if properties are owned by users
   // owner          User?    @relation(fields: [ownerId], references: [id])
   // ownerId        Int?
+}
+
+// Add Account and Session models for NextAuth if using OAuth
+model Account {
+  id                 String  @id @default(cuid())
+  userId             Int
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
