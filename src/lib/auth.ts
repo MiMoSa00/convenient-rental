@@ -1,7 +1,19 @@
 import NextAuth from "next-auth";
-import type { NextAuthOptions } from "next-auth";
-// Add your providers here (example with Google)
+import type { NextAuthOptions, Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
+import { prisma } from "@/lib/prisma";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      email?: string | null;
+      name?: string | null;
+      image?: string | null;
+    };
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -9,21 +21,65 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    // Add other providers as needed
   ],
+
   callbacks: {
-    async session({ session, token }) {
-      // Customize session object if needed
-      return session;
+    async signIn({ user, account, profile }) {
+      try {
+        if (user.email) {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+          });
+
+          if (!existingUser) {
+            await prisma.user.create({
+              data: {
+                email: user.email,
+                name: user.name || "User",
+                image: user.image,
+              },
+            });
+          }
+        }
+        return true;
+      } catch (error) {
+        console.error("SignIn error:", error);
+        return false;
+      }
     },
+
     async jwt({ token, user }) {
-      // Customize JWT token if needed
+      if (user?.email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            select: { id: true },
+          });
+          if (dbUser) {
+            token.sub = dbUser.id.toString();
+          }
+        } catch (error) {
+          console.error("JWT callback error:", error);
+        }
+      }
       return token;
     },
+
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub || "";
+      }
+      return session;
+    },
   },
+
   pages: {
     signIn: "/login",
-    // Add other custom pages if needed
+  },
+
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
   },
 };
 

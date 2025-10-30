@@ -1,60 +1,273 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.bg-grid-pattern {
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
-  background-size: 20px 20px;
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 15%;
+
+    --primary: 210 95% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 210 90% 65%;
+    --primary-light: 210 100% 97%;
+
+    --secondary: 220 15% 96%;
+    --secondary-foreground: 220 15% 20%;
+
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 280 85% 60%;
+    --accent-foreground: 0 0% 100%;
+    --accent-glow: 280 90% 70%;
+    --accent-light: 280 100% 97%;
+
+    --success: 145 80% 42%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 145 80% 97%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 210 95% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 220 20% 98%;
+    --sidebar-foreground: 220 15% 30%;
+    --sidebar-primary: 210 95% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 100% 97%;
+    --sidebar-accent-foreground: 210 95% 50%;
+    --sidebar-border: 220 15% 92%;
+    --sidebar-ring: 210 95% 50%;
+
+    /* Premium design tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(210 95% 50%) 0%, hsl(210 90% 65%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(280 85% 60%) 0%, hsl(280 90% 70%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(210 95% 50%) 0%, hsl(250 85% 60%) 50%, hsl(280 85% 60%) 100%);
+    --gradient-mesh: radial-gradient(at 0% 0%, hsl(210 95% 50% / 0.2) 0px, transparent 50%),
+                      radial-gradient(at 100% 0%, hsl(280 85% 60% / 0.2) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, hsl(210 95% 50% / 0.15) 0px, transparent 50%),
+                      radial-gradient(at 0% 100%, hsl(280 85% 60% / 0.15) 0px, transparent 50%);
+    --shadow-soft: 0 4px 20px -4px hsl(210 95% 50% / 0.15);
+    --shadow-medium: 0 8px 30px -6px hsl(210 95% 50% / 0.25);
+    --shadow-glow: 0 0 40px hsl(210 90% 65% / 0.3);
+    --shadow-elegant: 0 20px 60px -15px hsl(210 95% 50% / 0.35);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 220 15% 95%;
+
+    --card: 220 20% 12%;
+    --card-foreground: 220 15% 95%;
+
+    --popover: 220 20% 12%;
+    --popover-foreground: 220 15% 95%;
+
+    --primary: 210 90% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 210 85% 70%;
+    --primary-light: 210 90% 20%;
+
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 220 15% 95%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 280 80% 65%;
+    --accent-foreground: 0 0% 100%;
+    --accent-glow: 280 85% 75%;
+    --accent-light: 280 80% 20%;
+
+    --success: 145 75% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 145 75% 20%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 210 90% 60%;
+
+    --sidebar-background: 220 25% 10%;
+    --sidebar-foreground: 220 15% 90%;
+    --sidebar-primary: 210 90% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 210 90% 60%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 210 90% 60%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(210 90% 60%) 0%, hsl(210 85% 70%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(280 80% 65%) 0%, hsl(280 85% 75%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(210 90% 60%) 0%, hsl(250 80% 65%) 50%, hsl(280 80% 65%) 100%);
+    --gradient-mesh: radial-gradient(at 0% 0%, hsl(210 90% 60% / 0.15) 0px, transparent 50%),
+                      radial-gradient(at 100% 0%, hsl(280 80% 65% / 0.15) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, hsl(210 90% 60% / 0.1) 0px, transparent 50%),
+                      radial-gradient(at 0% 100%, hsl(280 80% 65% / 0.1) 0px, transparent 50%);
+    --shadow-soft: 0 4px 20px -4px hsl(210 90% 60% / 0.2);
+    --shadow-medium: 0 8px 30px -6px hsl(210 90% 60% / 0.3);
+    --shadow-glow: 0 0 40px hsl(210 85% 70% / 0.4);
+    --shadow-elegant: 0 20px 60px -15px hsl(210 90% 60% / 0.4);
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
-/* Use explicit color values here — avoid using Tailwind's theme() helper inside raw CSS. */
-:root {
-  --background: #ffffff;
-  --foreground: #111827;
-  --transition-duration: 0.15s;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ============================================
+   CUSTOM ANIMATIONS
+   ============================================ */
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* When the `dark` class is on the html element, override variables. */
-html.dark {
-  --background: #000000; /* pure black */
-  --foreground: #ffffff; /* pure white */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Smooth theme transitions */
-* {
-  transition: background-color var(--transition-duration) ease-in-out,
-              border-color var(--transition-duration) ease-in-out,
-              color var(--transition-duration) ease-in-out;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
-/* Compatibility override: many components use `bg-white` without a `dark:` variant.
-   When the site is in dark mode, make those elements use the dark background.
-   This is a temporary, minimal fix — ideally update components to include
-   `dark:bg-*` classes explicitly. */
-html.dark [class*="bg-white"] {
-  background-color: var(--background) !important;
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
-/* Also cover some other common light backgrounds used across the project */
-html.dark [class*="bg-gray-50"] {
-  background-color: var(--background) !important;
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
 }
 
-/* Ensure the html/body use the CSS variable as the canonical page background */
-html, body {
-  background-color: var(--background);
-  color: var(--foreground);
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 20px var(--shadow-glow);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 40px var(--shadow-glow);
+  }
 }
 
-/* Force common gray text utility classes to render white in dark mode so
-   components that didn't add dark: variants still appear readable. */
-html.dark [class*="text-gray-"] {
-  color: var(--foreground) !important;
+/* Animation utility classes */
+.animate-fade-in-down {
+  animation: fade-in-down 0.6s ease-out;
 }
 
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
 
-/* Let Tailwind utilities handle background colors; keep the body font settings. */
-body {
-  font-family: Arial, Helvetica, sans-serif;
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-gradient-x {
+  animation: gradient-x 3s ease infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+.shadow-elegant {
+  box-shadow: var(--shadow-elegant);
+}
+
+.shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+.shadow-medium {
+  box-shadow: var(--shadow-medium);
+}
+
+.transition-smooth {
+  transition: var(--transition-smooth);
+}
+
+.transition-bounce {
+  transition: var(--transition-bounce);
+}
+
+.gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.gradient-accent {
+  background: var(--gradient-accent);
+}
+
+.gradient-hero {
+  background: var(--gradient-hero);
+}
+
+.gradient-mesh {
+  background: var(--gradient-mesh);
 }

@@ -1,16 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { motion, type Variants, type Transition } from "framer-motion";
+import { motion } from "framer-motion";
+import type { Variants, Transition } from "framer-motion";
 import {
   User,
   Mail,
   Calendar,
-  Briefcase,
   MapPin,
   Heart,
   Edit,
-  Save,
+  Check,
   Camera,
 } from "lucide-react";
 
@@ -36,7 +36,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession() as { data: any; status: string };
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<UserProfile | null>(null);
@@ -62,6 +62,14 @@ export default function ProfilePage() {
     // First try to load from localStorage (quiz data)
     const localProfile = buildProfileFromLocalQuiz();
     if (localProfile) {
+      // Check if there's a saved image URL in localStorage
+      if (session?.user?.id) {
+        const userId = session.user.id;
+        const savedImageUrl = localStorage.getItem(`user_profile_image_${userId}`);
+        if (savedImageUrl) {
+          localProfile.profileImage = savedImageUrl;
+        }
+      }
       setProfile(localProfile);
       setEditedProfile(localProfile);
       setLoading(false);
@@ -163,6 +171,12 @@ export default function ProfilePage() {
         setEditedProfile(normalized);
         setIsEditing(false);
         setErrorMsg(null);
+        
+        // Save image URL to localStorage as backup
+        if (session?.user?.id && normalized.profileImage) {
+          const userId = session.user.id;
+          localStorage.setItem(`user_profile_image_${userId}`, normalized.profileImage);
+        }
       } else {
         const errorData = await response.json().catch(() => ({ error: "Failed to update profile" }));
         console.error("Failed to update profile", errorData);
@@ -209,6 +223,13 @@ export default function ProfilePage() {
       if (response.ok) {
         const data = await response.json();
         setEditedProfile((prev) => (prev ? { ...prev, profileImage: data.url } : null));
+        
+        // Save image URL to localStorage immediately so it persists on refresh
+        if (session?.user?.id) {
+          const userId = session.user.id;
+          localStorage.setItem(`user_profile_image_${userId}`, data.url);
+        }
+        
         setErrorMsg("Image uploaded successfully! Don't forget to save your changes.");
       } else {
         const errorData = await response.json();
@@ -397,7 +418,7 @@ export default function ProfilePage() {
     }
   };
 
-  const easeOutBezier: Transition["ease"] = [0.16, 1, 0.3, 1];
+  const easeOutBezier: readonly [number, number, number, number] = [0.16, 1, 0.3, 1];
 
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
@@ -525,7 +546,7 @@ export default function ProfilePage() {
                   onClick={handleSave}
                   className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
                 >
-                  <Save className="w-5 h-5" />
+                  <Check className="w-5 h-5" />
                   <span>Save Changes</span>
                 </button>
               ) : (
@@ -585,7 +606,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-                  <Briefcase className="w-5 h-5" />
+                  <User className="w-5 h-5" />
                   {isEditing ? (
                     <input
                       type="text"

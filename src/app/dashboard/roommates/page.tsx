@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Users, Heart, MessageSquare, Filter, Star, MapPin, Calendar, DollarSign, Briefcase } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Users, Heart, MessageSquare, Filter, Star, MapPin, Calendar, DollarSign, Briefcase, Sparkles } from "lucide-react";
 
-// Import our custom types and utilities
+// Import your custom types and utilities - KEEP THESE AS-IS
 import { RoommateProfile, RoommateMatch, MatchingResult } from "@/types/roommate";
 import { 
   getProfile, 
@@ -13,11 +13,10 @@ import {
   clearProfile 
 } from "@/lib/roommate-storage";
 import { calculateCompatibility, generateMatches } from "@/lib/roommate-matching";
-// import CompatibilityQuiz from "@/components/roommate/CompatibilityQuiz";
 import CompatibilityQuiz from "@/components/roommate/CompatibiltyQuiz";
 import ProgressBar from "@/components/ui/ProgressBar";
 
-// Import messaging components
+// Import messaging components - KEEP THESE AS-IS
 import { MessageProvider, useMessages } from "@/context/MessageContext";
 import ChatModal from "@/components/ChatModal";
 
@@ -32,6 +31,49 @@ interface DisplayMatch {
   interests: string[];
   profile: RoommateProfile;
 }
+
+// Scroll reveal component wrapper
+const ScrollRevealCard = ({ children, index, ...props }: any) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`bg-white border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 transition-all duration-700 hover:shadow-2xl transform hover:-translate-y-1 ${
+        isVisible 
+          ? 'opacity-100 translate-y-0' 
+          : 'opacity-0 translate-y-8'
+      }`}
+      style={{ animationDelay: `${index * 0.1}s` }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
 
 const FindRoommatesContent = () => {
   const { openChat, chats } = useMessages();
@@ -74,11 +116,9 @@ const FindRoommatesContent = () => {
   const loadUserData = async () => {
     setIsLoading(true);
     try {
-      // Load user profile from localStorage
       const profile = getProfile();
       setCurrentProfile(profile);
 
-      // If profile exists, generate matches
       if (profile) {
         await generateUserMatches(profile);
       }
@@ -91,13 +131,9 @@ const FindRoommatesContent = () => {
 
   const generateUserMatches = async (userProfile: RoommateProfile) => {
     try {
-      // Generate demo profiles for matching (in real app, this would come from API)
       const demoProfiles = generateDemoProfiles();
-      
-      // Generate matches using our matching algorithm
       const roommateMatches = generateMatches(userProfile, demoProfiles);
       
-      // Convert to display format
       const displayMatches: DisplayMatch[] = roommateMatches.map(match => {
         const otherProfile = demoProfiles.find(p => p.id === match.profileId2);
         if (!otherProfile) return null;
@@ -116,15 +152,12 @@ const FindRoommatesContent = () => {
 
       setMatches(displayMatches);
       setStats(prev => ({ ...prev, totalMatches: displayMatches.length }));
-      
-      // Save matches to storage
       saveMatches(roommateMatches);
     } catch (error) {
       console.error('Error generating matches:', error);
     }
   };
 
-  // Generate demo profiles for matching
   const generateDemoProfiles = (): RoommateProfile[] => {
     const demoProfiles: RoommateProfile[] = [
       {
@@ -267,7 +300,6 @@ const FindRoommatesContent = () => {
     return demoProfiles;
   };
 
-  // Helper functions
   const generateNameFromProfile = (profile: RoommateProfile): string => {
     const names: Record<string, string> = {
       'demo_1': 'Sarah Johnson',
@@ -294,7 +326,6 @@ const FindRoommatesContent = () => {
     return interests.slice(0, 3);
   };
 
-  // Event handlers
   const handleQuizComplete = (profile: RoommateProfile) => {
     setCurrentProfile(profile);
     saveProfile(profile);
@@ -332,7 +363,6 @@ const FindRoommatesContent = () => {
     setShowQuiz(true);
   };
 
-  // Filter matches based on current filters
   const filteredMatches = matches.filter(match => {
     if (filters.budgetRange !== 'any') {
       const budgetRanges: Record<string, { min: number; max: number }> = {
@@ -370,7 +400,6 @@ const FindRoommatesContent = () => {
     return true;
   });
 
-  // Show quiz if no profile exists or user wants to retake
   if (showQuiz) {
     return (
       <CompatibilityQuiz 
@@ -380,13 +409,12 @@ const FindRoommatesContent = () => {
     );
   }
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your roommate matches...</p>
+          <p className="text-gray-600 text-sm sm:text-base">Loading your roommate matches...</p>
         </div>
       </div>
     );
@@ -394,261 +422,332 @@ const FindRoommatesContent = () => {
 
   return (
     <>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Find Roommates</h1>
-            <p className="text-gray-600 mt-1">
-              {currentProfile ? 'Your personalized matches' : 'Create your profile to get started'}
-            </p>
-          </div>
-          <div className="flex gap-3">
-            {currentProfile && (
-              <button 
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm"
-                onClick={handleRetakeQuiz}
-              >
-                Retake Quiz
-              </button>
-            )}
-            <button 
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
-              onClick={handleCreateNewProfile}
-            >
-              {currentProfile ? 'Update Profile' : 'Create Profile'}
-            </button>
+      <style>{`
+        @keyframes fade-in-down {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in-up {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scale-in {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fade-in-down {
+          animation: fade-in-down 0.6s ease-out;
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.6s ease-out;
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+        .animate-scale-in {
+          animation: scale-in 0.3s ease-out;
+        }
+      `}</style>
+
+      <div className="min-h-full bg-gradient-to-b from-gray-50 to-gray-100">
+        {/* Enhanced Header Section */}
+        <div className="relative overflow-hidden border-b border-gray-200 bg-white backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 opacity-50"></div>
+          
+          <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-12">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+              <div className="space-y-2 sm:space-y-3 animate-fade-in-down">
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white backdrop-blur-sm rounded-full border border-purple-200 text-xs sm:text-sm text-gray-600">
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600 animate-pulse flex-shrink-0" />
+                  <span className="whitespace-nowrap">AI-Powered Matching</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+                  Find Your Perfect Roommate
+                </h1>
+                <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl leading-relaxed">
+                  {currentProfile ? 'Your personalized matches based on compatibility' : 'Create your profile to get started with intelligent matching'}
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                {currentProfile && (
+                  <button 
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 hover:shadow-lg whitespace-nowrap"
+                    onClick={handleRetakeQuiz}
+                  >
+                    Retake Quiz
+                  </button>
+                )}
+                <button 
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 hover:shadow-lg whitespace-nowrap"
+                  onClick={handleCreateNewProfile}
+                >
+                  {currentProfile ? 'Update Profile' : 'Create Profile'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Profile Status */}
+        {/* Profile Status Section */}
         {currentProfile && (
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {currentProfile.occupation[0]}
-                </div>
-                <div>
-                  <h3 className="font-semibold">Your Profile is Active</h3>
-                  <p className="text-sm text-gray-600">
-                    {currentProfile.age} years old • {currentProfile.occupation} • {currentProfile.location}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-500">Profile Completion</div>
-                <div className="flex items-center space-x-2">
-                  <ProgressBar current={100} total={100} className="w-20" />
-                  <span className="text-sm font-medium text-green-600">100%</span>
+          <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-gray-200 bg-white backdrop-blur-sm animate-fade-in">
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-start sm:items-center gap-3 w-full sm:w-auto">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-base sm:text-lg">
+                      {currentProfile.occupation[0]}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm sm:text-base mb-1">Your Profile is Active</h3>
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">
+                        <span className="inline-block">{currentProfile.age} years old</span>
+                        <span className="mx-1">•</span>
+                        <span className="inline-block">{currentProfile.occupation}</span>
+                        <span className="mx-1">•</span>
+                        <span className="inline-block">{currentProfile.location}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-full sm:w-auto sm:text-right">
+                    <div className="text-xs sm:text-sm text-gray-500 mb-1">Profile Completion</div>
+                    <div className="flex items-center gap-2">
+                      <ProgressBar current={100} total={100} className="w-16 sm:w-20" />
+                      <span className="text-xs sm:text-sm font-medium text-green-600 whitespace-nowrap">100%</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Matches</p>
-                <p className="text-2xl font-bold">{filteredMatches.length}</p>
-              </div>
-              <Users className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Messages</p>
-                <p className="text-2xl font-bold">{stats.messages}</p>
-              </div>
-              <div className="relative">
-                <MessageSquare className="h-8 w-8 text-green-500" />
-                {stats.messages > 0 && (
-                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {stats.messages > 9 ? '9+' : stats.messages}
+        {/* Enhanced Stats Section */}
+        <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-gray-200 bg-white backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 animate-fade-in-up">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-5 md:p-6 rounded-lg border border-blue-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs sm:text-sm text-blue-800 font-medium mb-1">Total Matches</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-blue-900">{filteredMatches.length}</p>
                   </div>
-                )}
+                  <Users className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600 flex-shrink-0" />
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Saved Profiles</p>
-                <p className="text-2xl font-bold">{stats.savedProfiles}</p>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-5 md:p-6 rounded-lg border border-green-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs sm:text-sm text-green-800 font-medium mb-1">Messages</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-green-900">{stats.messages}</p>
+                  </div>
+                  <div className="relative flex-shrink-0">
+                    <MessageSquare className="h-8 w-8 sm:h-10 sm:w-10 text-green-600" />
+                    {stats.messages > 0 && (
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] sm:text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center animate-pulse font-medium">
+                        {stats.messages > 9 ? '9+' : stats.messages}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <Heart className="h-8 w-8 text-red-500" />
+              <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 sm:p-5 md:p-6 rounded-lg border border-red-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs sm:text-sm text-red-800 font-medium mb-1">Saved Profiles</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-red-900">{stats.savedProfiles}</p>
+                  </div>
+                  <Heart className="h-8 w-8 sm:h-10 sm:w-10 text-red-600 flex-shrink-0" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* No Profile CTA */}
         {!currentProfile && (
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-8 text-white text-center">
-            <h2 className="text-2xl font-bold mb-2">Get Started with Your Roommate Profile</h2>
-            <p className="opacity-90 mb-6">
-              Take our 5-minute compatibility quiz to find your perfect roommate matches
-            </p>
-            <button 
-              className="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg transition-colors font-semibold"
-              onClick={handleCreateNewProfile}
-            >
-              Take Compatibility Quiz
-            </button>
+          <div className="p-4 sm:p-6 md:p-8 lg:p-12">
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 sm:p-8 text-white text-center animate-scale-in">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 leading-tight">Get Started with Your Roommate Profile</h2>
+                <p className="opacity-90 mb-4 sm:mb-6 text-sm sm:text-base md:text-lg">
+                  Take our 5-minute compatibility quiz to find your perfect roommate matches
+                </p>
+                <button 
+                  className="bg-white text-purple-600 hover:bg-gray-100 px-6 sm:px-8 py-3 sm:py-4 rounded-lg transition-all duration-300 font-semibold text-sm sm:text-base md:text-lg hover:shadow-xl transform hover:scale-105"
+                  onClick={handleCreateNewProfile}
+                >
+                  Take Compatibility Quiz
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Filters */}
+        {/* Enhanced Filters Section */}
         {currentProfile && matches.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center mb-4">
-              <Filter className="h-5 w-5 text-gray-500 mr-2" />
-              <h3 className="text-lg font-semibold">Filter Matches</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Budget Range
-                </label>
-                <select 
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  value={filters.budgetRange}
-                  onChange={(e) => setFilters(prev => ({ ...prev, budgetRange: e.target.value }))}
-                >
-                  <option value="any">Any Budget</option>
-                  <option value="200000-350000">₦200K-350K</option>
-                  <option value="350000-500000">₦350K-500K</option>
-                  <option value="500000-700000">₦500K-700K</option>
-                  <option value="700000+">₦700K+</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Age Range
-                </label>
-                <select 
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  value={filters.ageRange}
-                  onChange={(e) => setFilters(prev => ({ ...prev, ageRange: e.target.value }))}
-                >
-                  <option value="any">Any Age</option>
-                  <option value="18-22">18-22</option>
-                  <option value="23-27">23-27</option>
-                  <option value="28-32">28-32</option>
-                  <option value="33+">33+</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Occupation
-                </label>
-                <select 
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  value={filters.occupation}
-                  onChange={(e) => setFilters(prev => ({ ...prev, occupation: e.target.value }))}
-                >
-                  <option value="any">Any Occupation</option>
-                  <option value="student">Student</option>
-                  <option value="professional">Professional</option>
-                  <option value="remote-worker">Remote Worker</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Compatibility
-                </label>
-                <select 
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  value={filters.compatibility}
-                  onChange={(e) => setFilters(prev => ({ ...prev, compatibility: e.target.value }))}
-                >
-                  <option value="any">Any Match</option>
-                  <option value="90%+">90%+ Match</option>
-                  <option value="80%+">80%+ Match</option>
-                  <option value="70%+">70%+ Match</option>
-                </select>
+          <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-gray-200 bg-white backdrop-blur-sm">
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-5 md:p-6 animate-fade-in">
+                <div className="flex items-center mb-3 sm:mb-4">
+                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mr-2 flex-shrink-0" />
+                  <h3 className="text-base sm:text-lg font-semibold">Filter Matches</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                      Budget Range
+                    </label>
+                    <select 
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      value={filters.budgetRange}
+                      onChange={(e) => setFilters(prev => ({ ...prev, budgetRange: e.target.value }))}
+                    >
+                      <option value="any">Any Budget</option>
+                      <option value="200000-350000">₦200K-350K</option>
+                      <option value="350000-500000">₦350K-500K</option>
+                      <option value="500000-700000">₦500K-700K</option>
+                      <option value="700000+">₦700K+</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                      Age Range
+                    </label>
+                    <select 
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      value={filters.ageRange}
+                      onChange={(e) => setFilters(prev => ({ ...prev, ageRange: e.target.value }))}
+                    >
+                      <option value="any">Any Age</option>
+                      <option value="18-22">18-22</option>
+                      <option value="23-27">23-27</option>
+                      <option value="28-32">28-32</option>
+                      <option value="33+">33+</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                      Occupation
+                    </label>
+                    <select 
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      value={filters.occupation}
+                      onChange={(e) => setFilters(prev => ({ ...prev, occupation: e.target.value }))}
+                    >
+                      <option value="any">Any Occupation</option>
+                      <option value="student">Student</option>
+                      <option value="professional">Professional</option>
+                      <option value="remote-worker">Remote Worker</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                      Compatibility
+                    </label>
+                    <select 
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      value={filters.compatibility}
+                      onChange={(e) => setFilters(prev => ({ ...prev, compatibility: e.target.value }))}
+                    >
+                      <option value="any">Any Match</option>
+                      <option value="90%+">90%+ Match</option>
+                      <option value="80%+">80%+ Match</option>
+                      <option value="70%+">70%+ Match</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Matches */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">
-              Your Matches {filteredMatches.length > 0 && `(${filteredMatches.length})`}
-            </h2>
-          </div>
-          <div className="p-6">
+        {/* Matches Grid */}
+        <div className="p-4 sm:p-6 md:p-8 lg:p-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2 animate-fade-in">
+              <h2 className="text-xl sm:text-2xl font-bold break-words">
+                Your Matches {filteredMatches.length > 0 && `(${filteredMatches.length})`}
+              </h2>
+              {filteredMatches.length > 0 && (
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Found <span className="font-semibold text-purple-600">{filteredMatches.length}</span> compatible matches
+                </p>
+              )}
+            </div>
+            
             {!currentProfile ? (
-              <div className="text-center py-10 text-gray-600">
-                <Users className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-                <p>Create your profile to see roommate matches</p>
-                <p className="text-sm text-gray-500 mt-2">
+              <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center animate-fade-in">
+                <Users className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                <p className="text-lg sm:text-xl text-gray-600 mb-2">Create your profile to see roommate matches</p>
+                <p className="text-xs sm:text-sm text-gray-500">
                   Take our compatibility quiz to get personalized matches.
                 </p>
               </div>
             ) : filteredMatches.length === 0 ? (
-              <div className="text-center py-10 text-gray-600">
-                <Users className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-                <p>No matches found with current filters</p>
-                <p className="text-sm text-gray-500 mt-2">
+              <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center animate-fade-in">
+                <Users className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                <p className="text-lg sm:text-xl text-gray-600 mb-2">No matches found with current filters</p>
+                <p className="text-xs sm:text-sm text-gray-500">
                   Try adjusting your filters or retaking the quiz.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredMatches.map((match) => (
-                  <div
-                    key={match.id}
-                    className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                {filteredMatches.map((match, index) => (
+                  <ScrollRevealCard key={match.id} index={index}>
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+                      <div className="flex items-start gap-3 w-full sm:flex-1 min-w-0">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg flex-shrink-0">
                           {match.name[0]}
                         </div>
-                        <div>
-                          <h3 className="font-bold text-lg">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-bold text-base sm:text-lg break-words">
                             {match.name}, {match.age}
                           </h3>
-                          <p className="text-gray-600 flex items-center">
-                            <Briefcase className="h-4 w-4 mr-1" />
-                            {match.occupation}
+                          <p className="text-gray-600 flex items-center text-xs sm:text-sm mt-1 break-words">
+                            <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                            <span className="truncate">{match.occupation}</span>
                           </p>
-                          <p className="text-green-600 font-semibold flex items-center">
-                            <DollarSign className="h-4 w-4 mr-1" />
-                            {match.budget}
+                          <p className="text-green-600 font-semibold flex items-center text-xs sm:text-sm mt-1 break-words">
+                            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                            <span className="truncate">{match.budget}</span>
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right flex-shrink-0">
                         <div className="flex items-center mb-1">
-                          <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                          <span className="text-2xl font-bold text-green-600">
+                          <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 mr-1 flex-shrink-0" />
+                          <span className="text-xl sm:text-2xl font-bold text-green-600">
                             {match.compatibility}%
                           </span>
                         </div>
-                        <div className="text-sm text-gray-500">Match</div>
+                        <div className="text-xs sm:text-sm text-gray-500">Match</div>
                       </div>
                     </div>
                     
-                    <div className="mb-4">
-                      <div className="flex items-center text-sm text-gray-600 mb-2">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {match.profile.location}
-                        <Calendar className="h-4 w-4 ml-3 mr-1" />
-                        {match.profile.moveInDate}
+                    <div className="mb-3 sm:mb-4 space-y-2">
+                      <div className="flex flex-wrap items-center text-xs sm:text-sm text-gray-600 gap-2">
+                        <div className="flex items-center">
+                          <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                          <span className="break-words">{match.profile.location}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                          <span className="whitespace-nowrap">{match.profile.moveInDate}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {match.interests.map((interest, index) => (
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                        {match.interests.map((interest, idx) => (
                           <span
-                            key={index}
-                            className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full"
+                            key={idx}
+                            className="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap"
                           >
                             {interest}
                           </span>
@@ -656,21 +755,21 @@ const FindRoommatesContent = () => {
                       </div>
                     </div>
                     
-                    <div className="flex space-x-2">
+                    <div className="flex gap-2">
                       <button
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 sm:py-2.5 rounded-lg transition-all duration-300 font-medium text-xs sm:text-sm"
                         onClick={() => handleMessageClick(match)}
                       >
                         Message
                       </button>
                       <button
-                        className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 hover:border-red-300 group flex-shrink-0"
                         onClick={() => handleSaveClick(match.id)}
                       >
-                        <Heart className="h-5 w-5 text-gray-400" />
+                        <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 group-hover:text-red-500 transition-colors" />
                       </button>
                     </div>
-                  </div>
+                  </ScrollRevealCard>
                 ))}
               </div>
             )}

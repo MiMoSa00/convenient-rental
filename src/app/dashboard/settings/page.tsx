@@ -1,13 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
 import {
   Bell,
   Lock,
   Palette,
   Globe,
-  Trash2,
+  Trash,
   Save,
   AlertCircle,
   CheckCircle,
@@ -33,8 +34,50 @@ interface UserSettingsData {
   settings: Settings;
 }
 
+// Enhanced scroll reveal component
+const ScrollReveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, []);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+      animate={isVisible ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 50, scale: 0.95 }}
+      transition={{
+        duration: 0.6,
+        delay: delay,
+        ease: [0.21, 0.47, 0.32, 0.98],
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 export default function SettingsPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession() as { data: any; status: string };
   const [settings, setSettings] = useState<Settings | null>(null);
   const [originalSettings, setOriginalSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +95,6 @@ export default function SettingsPage() {
     }
   }, [status]);
 
-  // Track if settings have changed
   useEffect(() => {
     if (settings && originalSettings) {
       const changed = JSON.stringify(settings) !== JSON.stringify(originalSettings);
@@ -151,59 +193,80 @@ export default function SettingsPage() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-        <div className="text-center">
-          <Home className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4"
+      >
+        <motion.div
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
+            <Home className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+          </motion.div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Sign In Required
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Please sign in to access your settings.
           </p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader2 className="w-8 h-8 text-blue-500" />
+        </motion.div>
       </div>
     );
   }
 
   if (!settings) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4"
+      >
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          </motion.div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Error Loading Settings
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             We encountered an issue loading your settings.
           </p>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={fetchSettings}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             Try Again
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
     );
   }
-
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
-
-  const sectionVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
-  };
 
   const SettingToggle = ({
     label,
@@ -217,25 +280,27 @@ export default function SettingsPage() {
     onChange: (v: boolean) => void;
   }) => (
     <motion.div
-      variants={sectionVariants}
-      className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition border border-gray-200 dark:border-gray-700"
+      whileHover={{ scale: 1.02, y: -2 }}
+      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition border border-gray-200 dark:border-gray-700 cursor-pointer"
+      onClick={() => onChange(!value)}
     >
       <div className="flex-1">
         <p className="font-medium text-gray-900 dark:text-white">{label}</p>
         <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
       </div>
-      <button
-        onClick={() => onChange(!value)}
+      <motion.button
         className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ml-4 flex-shrink-0 ${
           value ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
         }`}
+        whileTap={{ scale: 0.95 }}
       >
         <motion.span
           className="inline-block h-6 w-6 transform rounded-full bg-white shadow-md"
           animate={{ x: value ? 28 : 4 }}
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
         />
-      </button>
+      </motion.button>
     </motion.div>
   );
 
@@ -253,8 +318,9 @@ export default function SettingsPage() {
     options: { label: string; value: string }[];
   }) => (
     <motion.div
-      variants={sectionVariants}
-      className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+      whileHover={{ scale: 1.02, y: -2 }}
+      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
     >
       <label className="block font-medium text-gray-900 dark:text-white mb-2">{label}</label>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{description}</p>
@@ -277,64 +343,96 @@ export default function SettingsPage() {
     title,
     description,
     children,
+    delay = 0,
   }: {
     icon: any;
     title: string;
     description?: string;
     children: React.ReactNode;
+    delay?: number;
   }) => (
-    <motion.div
-      variants={containerVariants}
-      className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
-    >
-      <div className="flex items-start space-x-4 mb-6">
-        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
-          <Icon className="w-6 h-6 text-white" />
+    <ScrollReveal delay={delay}>
+      <motion.div
+        whileHover={{ scale: 1.01 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300"
+      >
+        <div className="flex items-start space-x-4 mb-6">
+          <motion.div
+            whileHover={{ rotate: 360, scale: 1.1 }}
+            transition={{ duration: 0.6 }}
+            className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0"
+          >
+            <Icon className="w-6 h-6 text-white" />
+          </motion.div>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
+            {description && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{description}</p>
+            )}
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
-          {description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{description}</p>
-          )}
-        </div>
-      </div>
-      <div className="space-y-3">{children}</div>
-    </motion.div>
+        <div className="space-y-3">{children}</div>
+      </motion.div>
+    </ScrollReveal>
   );
 
   return (
     <motion.div
-      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8 px-4 sm:px-6 lg:px-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
     >
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <motion.div variants={containerVariants} className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-8"
+        >
+          <motion.h1
+            initial={{ x: -20 }}
+            animate={{ x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl font-bold text-gray-900 dark:text-white mb-2"
+          >
+            Settings
+          </motion.h1>
+          <motion.p
+            initial={{ x: -20 }}
+            animate={{ x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-gray-600 dark:text-gray-400"
+          >
             Manage your account preferences and privacy settings
-          </p>
+          </motion.p>
         </motion.div>
 
         {/* Messages */}
         {message && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
             className={`mb-6 p-4 rounded-lg flex items-start space-x-3 border ${
               message.type === "success"
                 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
                 : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
             }`}
           >
-            {message.type === "success" ? (
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-            )}
+            <motion.div
+              animate={{ rotate: message.type === "success" ? [0, 360] : [0, -10, 10, -10, 10, 0] }}
+              transition={{ duration: 0.5 }}
+            >
+              {message.type === "success" ? (
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              )}
+            </motion.div>
             <span
               className={
                 message.type === "success"
@@ -348,12 +446,13 @@ export default function SettingsPage() {
         )}
 
         {/* Settings Sections */}
-        <motion.div className="space-y-6">
+        <div className="space-y-6">
           {/* Notifications */}
           <SettingSection
             icon={Bell}
             title="Notifications"
             description="Control how you receive updates"
+            delay={0.1}
           >
             <SettingToggle
               label="Email Notifications"
@@ -380,6 +479,7 @@ export default function SettingsPage() {
             icon={Lock}
             title="Privacy & Safety"
             description="Control your profile visibility and matching"
+            delay={0.2}
           >
             <SettingToggle
               label="Private Profile"
@@ -406,6 +506,7 @@ export default function SettingsPage() {
             icon={Palette}
             title="Appearance"
             description="Customize how the app looks"
+            delay={0.3}
           >
             <SettingSelect
               label="Theme"
@@ -425,6 +526,7 @@ export default function SettingsPage() {
             icon={Globe}
             title="Localization"
             description="Set your language and timezone"
+            delay={0.4}
           >
             <SettingSelect
               label="Language"
@@ -461,95 +563,116 @@ export default function SettingsPage() {
           </SettingSection>
 
           {/* Danger Zone */}
-          <motion.div
-            variants={containerVariants}
-            className="bg-red-50 dark:bg-red-900/20 rounded-2xl shadow-sm border-2 border-red-200 dark:border-red-800 p-6"
-          >
-            <div className="flex items-start space-x-4 mb-4">
-              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/40 flex-shrink-0">
-                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-red-700 dark:text-red-400">Danger Zone</h2>
-                <p className="text-sm text-red-600 dark:text-red-300 mt-1">
-                  Deleting your account is permanent and cannot be undone. All your data will be
-                  deleted.
-                </p>
-              </div>
-            </div>
-
-            {deleteConfirm && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="p-4 rounded-lg bg-red-100 dark:bg-red-900/40 mb-4 border border-red-200 dark:border-red-700"
-              >
-                <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-3">
-                  This action cannot be undone. Type DELETE to confirm.
-                </p>
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <button
-                    onClick={handleDeleteAccount}
-                    disabled={deleting}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition flex items-center justify-center space-x-2 flex-1"
-                  >
-                    {deleting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Deleting...</span>
-                      </>
-                    ) : (
-                      "Confirm Delete"
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirm(false)}
-                    disabled={deleting}
-                    className="px-4 py-2 bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-200 rounded-lg hover:bg-red-300 dark:hover:bg-red-900/70 disabled:opacity-50 transition flex-1"
-                  >
-                    Cancel
-                  </button>
+          <ScrollReveal delay={0.5}>
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-red-50 dark:bg-red-900/20 rounded-2xl shadow-sm border-2 border-red-200 dark:border-red-800 p-6 hover:shadow-xl transition-all duration-300"
+            >
+              <div className="flex items-start space-x-4 mb-4">
+                <motion.div
+                  whileHover={{ rotate: [0, -10, 10, -10, 10, 0] }}
+                  transition={{ duration: 0.5 }}
+                  className="p-2 rounded-lg bg-red-100 dark:bg-red-900/40 flex-shrink-0"
+                >
+                  <Trash className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </motion.div>
+                <div>
+                  <h2 className="text-lg font-bold text-red-700 dark:text-red-400">Danger Zone</h2>
+                  <p className="text-sm text-red-600 dark:text-red-300 mt-1">
+                    Deleting your account is permanent and cannot be undone. All your data will be
+                    deleted.
+                  </p>
                 </div>
-              </motion.div>
-            )}
-            {!deleteConfirm && (
-              <button
-                onClick={handleDeleteAccount}
-                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
-              >
-                Delete Account
-              </button>
-            )}
-          </motion.div>
-        </motion.div>
+              </div>
+
+              {deleteConfirm && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-4 rounded-lg bg-red-100 dark:bg-red-900/40 mb-4 border border-red-200 dark:border-red-700"
+                >
+                  <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-3">
+                    This action cannot be undone. Type DELETE to confirm.
+                  </p>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleDeleteAccount}
+                      disabled={deleting}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition flex items-center justify-center space-x-2 flex-1"
+                    >
+                      {deleting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Deleting...</span>
+                        </>
+                      ) : (
+                        "Confirm Delete"
+                      )}
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setDeleteConfirm(false)}
+                      disabled={deleting}
+                      className="px-4 py-2 bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-200 rounded-lg hover:bg-red-300 dark:hover:bg-red-900/70 disabled:opacity-50 transition flex-1"
+                    >
+                      Cancel
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+              {!deleteConfirm && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleDeleteAccount}
+                  className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                >
+                  Delete Account
+                </motion.button>
+              )}
+            </motion.div>
+          </ScrollReveal>
+        </div>
 
         {/* Action Buttons */}
-        <motion.div variants={containerVariants} className="mt-8 flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={handleResetSettings}
-            disabled={!hasChanges || saving}
-            className="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            Reset Changes
-          </button>
-          <button
-            onClick={handleSaveSettings}
-            disabled={!hasChanges || saving}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center space-x-2"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                <span>Save Changes</span>
-              </>
-            )}
-          </button>
-        </motion.div>
+        <ScrollReveal delay={0.6}>
+          <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleResetSettings}
+              disabled={!hasChanges || saving}
+              className="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md hover:shadow-lg"
+            >
+              Reset Changes
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSaveSettings}
+              disabled={!hasChanges || saving}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  <span>Save Changes</span>
+                </>
+              )}
+            </motion.button>
+          </div>
+        </ScrollReveal>
       </div>
     </motion.div>
   );
