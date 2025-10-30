@@ -18,6 +18,50 @@ interface UserMatchData {
   interests: string[];
 }
 
+// Add Property interface
+interface Property {
+  id: number;
+  latitude: number | null;
+  longitude: number | null;
+  price: number;
+  isAvailable: boolean;
+  [key: string]: any; // Allow other properties
+}
+
+// Add PropertyWithDistance interface
+interface PropertyWithDistance extends Property {
+  distance: number;
+}
+
+// Add Roommate interface
+interface Roommate {
+  id: number;
+  name: string | null;
+  age: number | null;
+  occupation: string | null;
+  profileImage: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  preferences: any;
+  interests: string[] | null;
+  lookingForRoommate: boolean;
+}
+
+// Add RoommateWithMatch interface
+interface RoommateWithMatch {
+  id: number;
+  name: string;
+  age: number;
+  occupation: string;
+  profileImage: string | null;
+  latitude: number;
+  longitude: number;
+  distance: number;
+  matchPercentage: number;
+  interests: string[];
+  preferences: RoommatePreferences;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -66,7 +110,7 @@ export async function GET(request: Request) {
     const maxLng = lng + lngRadius;
 
     // Fetch properties
-    let properties: any[] = [];
+    let properties: PropertyWithDistance[] = [];
     if (filter === "all" || filter === "properties") {
       const rawProperties = await prisma.property.findMany({
         where: {
@@ -78,16 +122,16 @@ export async function GET(request: Request) {
       });
 
       properties = rawProperties
-        .map((p) => ({
+        .map((p: Property): PropertyWithDistance => ({
           ...p,
           distance: calculateDistance(lat, lng, p.latitude || 0, p.longitude || 0),
         }))
-        .filter((p) => p.distance <= radius)
-        .sort((a, b) => (a?.distance ?? 0) - (b?.distance ?? 0));
+        .filter((p: PropertyWithDistance) => p.distance <= radius)
+        .sort((a: PropertyWithDistance, b: PropertyWithDistance) => a.distance - b.distance);
     }
 
     // Fetch roommates
-    let roommates: any[] = [];
+    let roommates: RoommateWithMatch[] = [];
     if (filter === "all" || filter === "roommates") {
       const rawRoommates = await prisma.user.findMany({
         where: {
@@ -114,7 +158,7 @@ export async function GET(request: Request) {
       }
 
       roommates = rawRoommates
-        .map((r) => {
+        .map((r: Roommate): RoommateWithMatch | null => {
           if (!r.latitude || !r.longitude) return null;
 
           const distance = calculateDistance(lat, lng, r.latitude, r.longitude);
@@ -139,8 +183,8 @@ export async function GET(request: Request) {
             preferences: (r.preferences as RoommatePreferences) || {},
           };
         })
-        .filter((r): r is NonNullable<typeof r> => r !== null && r.distance <= radius)
-        .sort((a, b) => b.matchPercentage - a.matchPercentage);
+        .filter((r): r is RoommateWithMatch => r !== null && r.distance <= radius)
+        .sort((a: RoommateWithMatch, b: RoommateWithMatch) => b.matchPercentage - a.matchPercentage);
     }
 
     return NextResponse.json({ properties, roommates });
@@ -223,10 +267,10 @@ function comparePreferences(
 function compareInterests(interests1?: string[], interests2?: string[]): number {
   if (!interests1?.length || !interests2?.length) return 0;
 
-  const norm1 = interests1.map((i) => i.toLowerCase().trim());
-  const norm2 = interests2.map((i) => i.toLowerCase().trim());
+  const norm1 = interests1.map((i: string) => i.toLowerCase().trim());
+  const norm2 = interests2.map((i: string) => i.toLowerCase().trim());
 
-  const common = norm1.filter((i) => norm2.includes(i));
+  const common = norm1.filter((i: string) => norm2.includes(i));
   const total = new Set([...norm1, ...norm2]).size;
 
   return common.length / total;
