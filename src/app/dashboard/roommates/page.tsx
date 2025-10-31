@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Users, Heart, MessageSquare, Filter, Star, MapPin, Calendar, DollarSign, Briefcase, Sparkles } from "lucide-react";
+import { Users, Heart, MessageSquare, Filter, Star, MapPin, Calendar, DollarSign, Building2, Sparkles } from "lucide-react";
 
 // Import your custom types and utilities - KEEP THESE AS-IS
 import { RoommateProfile, RoommateMatch, MatchingResult } from "@/types/roommate";
@@ -712,7 +712,7 @@ const FindRoommatesContent = () => {
                             {match.name}, {match.age}
                           </h3>
                           <p className="text-gray-600 flex items-center text-xs sm:text-sm mt-1 break-words">
-                            <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                            <Building2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
                             <span className="truncate">{match.occupation}</span>
                           </p>
                           <p className="text-green-600 font-semibold flex items-center text-xs sm:text-sm mt-1 break-words">

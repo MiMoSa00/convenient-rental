@@ -13,9 +13,8 @@ import {
   Home,
   MoreVertical,
   Copy,
-  CheckCircle2,
+  CheckCircle,
   XCircle,
-  Archive,
 } from "lucide-react";
 
 type PropertyListing = {
@@ -381,7 +380,7 @@ const listings: React.FC = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 {[
                   { label: "Total Listings", value: listings.length, icon: Home, color: "primary" },
-                  { label: "Active", value: listings.filter((l) => l.status === "active").length, icon: CheckCircle2, color: "accent" },
+                  { label: "Active", value: listings.filter((l) => l.status === "active").length, icon: CheckCircle, color: "accent" },
                   { label: "Total Views", value: totalViews, icon: Eye, color: "info" },
                   { label: "Inquiries", value: totalInquiries, icon: DollarSign, color: "warning" },
                 ].map((stat, index) => (
@@ -642,7 +641,7 @@ const CardMenu: React.FC<{
         onClick={onDuplicate}
         className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-foreground transition-colors"
       >
-        <Archive className="h-4 w-4 text-muted-foreground" />
+        <Copy className="h-4 w-4 text-muted-foreground" />
         Duplicate
       </button>
       <button
@@ -657,7 +656,7 @@ const CardMenu: React.FC<{
         onClick={onSetActive}
         className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-foreground transition-colors"
       >
-        <CheckCircle2 className="h-4 w-4 text-accent" />
+        <CheckCircle className="h-4 w-4 text-accent" />
         Mark Active
       </button>
       <button

@@ -183,7 +183,7 @@ export async function GET(request: Request) {
             preferences: (r.preferences as RoommatePreferences) || {},
           };
         })
-        .filter((r): r is RoommateWithMatch => r !== null && r.distance <= radius)
+        .filter((r: RoommateWithMatch | null): r is RoommateWithMatch => r !== null && r.distance <= radius)
         .sort((a: RoommateWithMatch, b: RoommateWithMatch) => b.matchPercentage - a.matchPercentage);
     }
 

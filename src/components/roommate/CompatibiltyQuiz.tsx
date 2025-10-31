@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Check, User, Home, Heart, Briefcase, Moon, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, User, Home, Heart, Building2, Clock, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { RoommateProfile, Question, QuizStep } from '@/types/roommate';
 
@@ -237,7 +237,7 @@ const CompatibilityQuiz: React.FC<CompatibilityQuizProps> = ({ onComplete, onCan
       id: 'lifestyle',
       title: 'Lifestyle & Schedule',
       description: 'Your daily habits and schedule',
-      icon: <Moon className="h-6 w-6" />,
+      icon: <Clock className="h-6 w-6" />,
       questions: [
         {
           id: 'sleepSchedule',
