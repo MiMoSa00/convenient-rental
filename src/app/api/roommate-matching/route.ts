@@ -37,14 +37,14 @@ export async function POST(request: Request) {
         userId,
         budget: data.budget.max, // or data.budget.min depending on your requirements
         moveInDate: new Date(data.moveInDate),
-  duration: typeof data.duration === 'number' ? data.duration : (typeof data.duration === 'string' ? parseInt(data.duration) || 0 : 0),
-  lifestyle: data.lifestyle ?? [],
-  location: data.location,
-  cleaningHabits: data.cleaningHabits ?? '',
-  smokingTolerance: data.smokingTolerance ?? '',
-  petPreference: data.petPreference ?? '',
-  workSchedule: data.workSchedule ?? '',
-  guestHabits: data.guestHabits ?? '',
+        duration: typeof data.duration === 'number' ? data.duration : (typeof data.duration === 'string' ? parseInt(data.duration) || 0 : 0),
+        lifestyle: data.lifestyle ?? [],
+        location: data.location,
+        cleaningHabits: data.cleaningHabits ?? '',
+        smokingTolerance: data.smokingTolerance ?? '',
+        petPreference: data.petPreference ?? '',
+        workSchedule: data.workSchedule ?? '',
+        guestHabits: data.guestHabits ?? '',
         status: 'ACTIVE',
       },
       include: {
@@ -109,7 +109,8 @@ export async function POST(request: Request) {
     });
 
     const matches = await Promise.all(matchPromises);
-    const validMatches = matches.filter((match): match is RoommateMatch => match !== null);
+    // FIX: Add explicit type annotation for the match parameter
+    const validMatches = matches.filter((match: RoommateMatch | null): match is RoommateMatch => match !== null);
 
     return NextResponse.json({
       success: true,
@@ -118,15 +119,16 @@ export async function POST(request: Request) {
       matchCount: validMatches.length,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in roommate matching:', error);
-    if (error?.code === 'P2002') {
+    const prismaError = error as { code?: string };
+    if (prismaError?.code === 'P2002') {
       return NextResponse.json(
         { error: 'A roommate request already exists for this user' },
         { status: 409 }
       );
     }
-    if (error?.code === 'P2003') {
+    if (prismaError?.code === 'P2003') {
       return NextResponse.json(
         { error: 'Invalid user reference' },
         { status: 400 }
@@ -207,7 +209,7 @@ export async function GET(request: Request) {
       matches,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching roommate data:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
