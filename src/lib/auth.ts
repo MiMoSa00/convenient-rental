@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
-import type { NextAuthOptions, Session } from "next-auth";
-import type { JWT } from "next-auth/jwt";
+import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 
@@ -24,7 +23,7 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ user, account, profile }) {
+ async signIn({ user, account: _account, profile: _profile }) {
       try {
         if (user.email) {
           const existingUser = await prisma.user.findUnique({

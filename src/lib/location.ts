@@ -1,4 +1,4 @@
-import { Location, Coordinates, MapBounds, GeocodingResult } from "@/types/location";
+import { Location, Coordinates, MapBounds } from "@/types/location";
 
 /**
  * Convert degrees to radians
@@ -152,7 +152,7 @@ export function parseLocation(input: string | Location | Coordinates): Location 
 export function formatLocation(location: Location | Coordinates): string {
   const lat = "latitude" in location ? location.latitude : location.lat;
   const lng = "longitude" in location ? location.longitude : location.lng;
-  return `    return lat + "," + lng;`;
+  return `${lat},${lng}`;
 }
 
 /**

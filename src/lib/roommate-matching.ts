@@ -16,7 +16,7 @@ const NIGERIAN_LOCATIONS = {
 };
 
 // Debug logging function
-const debugLog = (message: string, data?: any) => {
+const debugLog = (message: string, data?: unknown) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(`[Roommate Matching] ${message}`, data || '');
   }
@@ -109,7 +109,7 @@ const calculateLocationCompatibility = (location1: string, location2: string): n
   }
   
   // Check for neighboring states or major cities
-  const neighboringRegions = {
+  const neighboringRegions: Record<string, string[]> = {
     'lagos': ['ogun', 'oyo'],
     'abuja': ['niger', 'kaduna', 'kogi', 'nasarawa'],
     'kano': ['kaduna', 'jigawa', 'katsina'],
@@ -127,7 +127,7 @@ const calculateLocationCompatibility = (location1: string, location2: string): n
   }
   
   // Different regions but same geopolitical zone
-  const geopoliticalZones = {
+  const geopoliticalZones: Record<string, string[]> = {
     'south-west': ['lagos', 'ogun', 'oyo', 'osun', 'ondo', 'ekiti'],
     'north-central': ['abuja', 'niger', 'kogi', 'kwara', 'nasarawa', 'plateau', 'benue'],
     'north-west': ['kaduna', 'kano', 'katsina', 'kebbi', 'sokoto', 'zamfara', 'jigawa'],
@@ -236,9 +236,8 @@ const calculateHabitsCompatibility = (profile1: RoommateProfile, profile2: Roomm
 const calculateCleanlinessCompatibility = (cleanliness1: string, cleanliness2: string): number => {
   if (cleanliness1 === cleanliness2) return 100;
   
-  const cleanlinessLevels = { 'relaxed': 1, 'moderately-clean': 2, 'very-clean': 3 };
-  const diff = Math.abs(cleanlinessLevels[cleanliness1 as keyof typeof cleanlinessLevels] - 
-                       cleanlinessLevels[cleanliness2 as keyof typeof cleanlinessLevels]);
+  const cleanlinessLevels: Record<string, number> = { 'relaxed': 1, 'moderately-clean': 2, 'very-clean': 3 };
+  const diff = Math.abs((cleanlinessLevels[cleanliness1] || 0) - (cleanlinessLevels[cleanliness2] || 0));
   
   return Math.max(0, 100 - (diff * 40));
 };
@@ -259,9 +258,8 @@ const calculateSocialCompatibility = (profile1: RoommateProfile, profile2: Roomm
   if (profile1.guestPolicy === profile2.guestPolicy) {
     score += 100;
   } else {
-    const guestLevels = { 'rare-guests': 1, 'occasional-guests': 2, 'frequent-guests': 3 };
-    const diff = Math.abs(guestLevels[profile1.guestPolicy as keyof typeof guestLevels] - 
-                         guestLevels[profile2.guestPolicy as keyof typeof guestLevels]);
+    const guestLevels: Record<string, number> = { 'rare-guests': 1, 'occasional-guests': 2, 'frequent-guests': 3 };
+    const diff = Math.abs((guestLevels[profile1.guestPolicy] || 0) - (guestLevels[profile2.guestPolicy] || 0));
     score += Math.max(30, 100 - (diff * 35));
   }
   factors++;

@@ -21,7 +21,7 @@ export const getProfile = (): RoommateProfile | null => {
     const stored = localStorage.getItem(STORAGE_KEYS.PROFILE);
     if (!stored) return null;
     
-    const profile = JSON.parse(stored);
+    const profile = JSON.parse(stored) as RoommateProfile;
     // Convert date strings back to Date objects
     profile.createdAt = new Date(profile.createdAt);
     profile.updatedAt = new Date(profile.updatedAt);
@@ -55,11 +55,12 @@ export const getMatches = (): RoommateMatch[] => {
     const stored = localStorage.getItem(STORAGE_KEYS.MATCHES);
     if (!stored) return [];
     
-    const matches = JSON.parse(stored);
+    const matches = JSON.parse(stored) as RoommateMatch[];
     // Convert date strings back to Date objects
-    return matches.map((match: any) => ({
+    return matches.map((match: RoommateMatch) => ({
       ...match,
-      createdAt: new Date(match.createdAt)
+      createdAt: new Date(match.createdAt),
+      updatedAt: new Date(match.updatedAt)
     }));
   } catch (error) {
     console.error('Error retrieving matches:', error);
@@ -74,7 +75,7 @@ export const addMatch = (match: RoommateMatch): void => {
 };
 
 // Quiz Progress Storage
-export const saveQuizProgress = (step: number, answers: Record<string, any>): void => {
+export const saveQuizProgress = (step: number, answers: Record<string, string | number | boolean>): void => {
   try {
     localStorage.setItem(STORAGE_KEYS.QUIZ_PROGRESS, JSON.stringify({ step, answers }));
   } catch (error) {
@@ -82,10 +83,10 @@ export const saveQuizProgress = (step: number, answers: Record<string, any>): vo
   }
 };
 
-export const getQuizProgress = (): { step: number; answers: Record<string, any> } | null => {
+export const getQuizProgress = (): { step: number; answers: Record<string, string | number | boolean> } | null => {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.QUIZ_PROGRESS);
-    return stored ? JSON.parse(stored) : null;
+    return stored ? JSON.parse(stored) as { step: number; answers: Record<string, string | number | boolean> } : null;
   } catch (error) {
     console.error('Error retrieving quiz progress:', error);
     return null;
@@ -123,7 +124,7 @@ export const getProfileFromAPI = async (): Promise<RoommateProfile | null> => {
     const response = await fetch('/api/roommate/profile');
     if (!response.ok) return null;
     
-    return await response.json();
+    return await response.json() as RoommateProfile;
   } catch (error) {
     console.error('Error fetching profile from API:', error);
     return null;
@@ -135,8 +136,8 @@ export const getMatchesFromAPI = async (): Promise<RoommateMatch[]> => {
     const response = await fetch('/api/roommate/matches');
     if (!response.ok) return [];
     
-    return await response.json();
-  } catch (error) {
+    return await response.json() as RoommateMatch[];
+    } catch (error) {
     console.error('Error fetching matches from API:', error);
     return [];
   }

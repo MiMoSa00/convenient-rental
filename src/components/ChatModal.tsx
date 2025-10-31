@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Maximize2, Minimize2, Send, Smile, Paperclip } from 'lucide-react';
 import { useMessages } from '@/context/MessageContext';
+import { ChatMessage } from '@/types/message';
 
 const ChatModal: React.FC = () => {
   const { activeChat, messages, isModalOpen, closeChat, sendMessage } = useMessages();
@@ -154,7 +155,7 @@ const ChatModal: React.FC = () => {
             </div>
           ) : (
             <div className={`space-y-4 ${isExpanded ? 'max-w-4xl mx-auto' : ''}`}>
-              {messages.map((message, index) => {
+              {messages.map((message: ChatMessage, index: number) => {
                 const isCurrentUser = message.senderId === 'current-user';
                 const showDate = index === 0 || 
                   formatDate(message.timestamp) !== formatDate(messages[index - 1].timestamp);
@@ -201,7 +202,7 @@ const ChatModal: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area - Reduced padding and better positioning */}
+        {/* Input Area */}
         <div className={`border-t border-gray-200 bg-white flex-shrink-0 ${
           isExpanded ? 'px-6 py-3 rounded-none' : 'px-4 py-3 rounded-b-2xl'
         }`}>

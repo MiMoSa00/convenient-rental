@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { Chat, ChatMessage, MessageContextType } from '@/types/message';
+import { Chat, ChatMessage, MessageContextType, RoommateMatch } from '@/types/message';
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
@@ -84,7 +84,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
     ));
   }, []);
 
-  const openChat = useCallback((roommateMatch: any) => {
+  const openChat = useCallback((roommateMatch: RoommateMatch) => {
     const chatId = `chat-${Date.now()}-${roommateMatch.id}`;
     
     // Check if chat already exists

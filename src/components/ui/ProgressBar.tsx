@@ -8,7 +8,7 @@ interface ProgressBarProps {
 }
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ current, total, className = '' }) => {
-  const percentage = (current / total) * 100;
+  const percentage = total > 0 ? (current / total) * 100 : 0;
   
   return (
     <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>

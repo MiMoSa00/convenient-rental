@@ -1,7 +1,7 @@
 declare module "next-auth/react" {
   export * from "next-auth/react/types";
 
-  export function useSession(): { data: any; } {
+export function useSession(_arg0?: any): any; {
     throw new Error("Function not implemented.");
   }
 

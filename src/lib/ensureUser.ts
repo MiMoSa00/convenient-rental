@@ -37,9 +37,10 @@ export async function ensureUserExists(session: Session): Promise<NonNullable<Us
         },
       });
       console.log(`User created successfully: ${user.id}`);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error("Error creating user:", error);
-      throw new Error(`Failed to create user: ${error.message}`);
+      throw new Error(`Failed to create user: ${errorMessage}`);
     }
   }
 
