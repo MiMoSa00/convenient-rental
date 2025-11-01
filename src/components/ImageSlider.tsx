@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 const images = [
   {
-    url: '/Images/rental 1.jpg',
+    url: '/Images/rental-1.jpg',
     title: 'Luxury Apartments',
     description: 'Find your perfect modern living space'
   },

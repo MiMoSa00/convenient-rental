@@ -26,6 +26,7 @@ interface ApiResponse {
   };
   message: string;
   error?: string;
+  requiresEmailVerification?: boolean;
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
@@ -85,7 +86,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
           name: name,
           full_name: name,
           display_name: name
-        }
+        },
+        // This tells Supabase where to redirect after email confirmation
+        emailRedirectTo: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/login`
       }
     });
 
@@ -114,6 +117,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     console.log('User created successfully with ID:', data.user.id);
+    console.log('Email confirmation required:', data.user.identities?.length === 0);
+
+    // Check if email confirmation is required
+    const requiresEmailVerification = data.user.identities?.length === 0;
 
     return NextResponse.json({
       success: true,
@@ -122,7 +129,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         email: data.user.email!,
         name: name,
       },
-      message: 'User created successfully'
+      message: requiresEmailVerification 
+        ? 'User created successfully. Please check your email to verify your account.'
+        : 'User created successfully',
+      requiresEmailVerification
     });
 
   } catch (error) {
