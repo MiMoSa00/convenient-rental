@@ -31,50 +31,34 @@ export default function LoginForm() {
     try {
       console.log('Attempting login for:', email);
       
-      // Sign in with NextAuth
+      // Sign in with NextAuth - this is all you need!
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
-        callbackUrl: '/dashboard'
       });
 
       console.log('SignIn result:', result);
 
       if (result?.error) {
         console.error('Login error:', result.error);
-        setError('Invalid email or password. Please check your credentials and try again.');
+        
+        // Better error messages
+        if (result.error === 'CredentialsSignin') {
+          setError('Invalid email or password. Please check your credentials.');
+        } else {
+          setError('Login failed. Please try again.');
+        }
+        
         setLoading(false);
         return;
       }
 
       if (result?.ok) {
-        console.log('Login successful, fetching user data...');
+        console.log('Login successful, redirecting to dashboard...');
         
-        // Fetch user data from our login API to get the name
-        try {
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('User data fetched:', data);
-            
-            // Store user name in localStorage for dashboard
-            if (data.user?.name) {
-              localStorage.setItem('userName', data.user.name);
-              console.log('Stored userName in localStorage:', data.user.name);
-            }
-          }
-        } catch (err) {
-          console.error('Error fetching user data:', err);
-          // Continue anyway - this is just for the name
-        }
-
-        console.log('Redirecting to dashboard...');
+        // NextAuth has created the session automatically
+        // The user's name is already in the session
         router.push('/dashboard');
         router.refresh();
       } else {
