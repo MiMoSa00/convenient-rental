@@ -1,6 +1,5 @@
-"use client";
+"use client"
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
 import {
   Plus,
   Edit,
@@ -15,6 +14,9 @@ import {
   Copy,
   CheckCircle,
   XCircle,
+  Upload,
+  X,
+  Image as ImageIcon,
 } from "lucide-react";
 
 type PropertyListing = {
@@ -44,7 +46,7 @@ type ListingFormValues = {
   bedrooms: string;
   bathrooms: string;
   status: "active" | "inactive" | "rented";
-  images: string;
+  images: string[];
   amenities: string;
   lookingFor: string;
 };
@@ -58,7 +60,7 @@ const defaultFormValues: ListingFormValues = {
   bedrooms: "1",
   bathrooms: "1",
   status: "active",
-  images: "",
+  images: [],
   amenities: "",
   lookingFor: "",
 };
@@ -126,42 +128,7 @@ const useBodyScrollLock = (isLocked: boolean) => {
   }, [isLocked]);
 };
 
-// Helper function to get user-specific localStorage key
-const getStorageKey = (userId: string | undefined): string => {
-  if (!userId) return "myListings_guest";
-  return `myListings_${userId}`;
-};
-
-// Helper functions for localStorage operations
-const saveListingsToStorage = (userId: string | undefined, listings: PropertyListing[]) => {
-  try {
-    const key = getStorageKey(userId);
-    localStorage.setItem(key, JSON.stringify(listings));
-    console.log(`✅ Saved ${listings.length} listings for user ${userId || 'guest'}`);
-  } catch (error) {
-    console.error("Failed to save listings to localStorage:", error);
-  }
-};
-
-const loadListingsFromStorage = (userId: string | undefined): PropertyListing[] => {
-  try {
-    const key = getStorageKey(userId);
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      const parsed = JSON.parse(raw) as PropertyListing[];
-      console.log(`✅ Loaded ${parsed.length} listings for user ${userId || 'guest'}`);
-      return parsed;
-    }
-  } catch (error) {
-    console.error("Failed to load listings from localStorage:", error);
-  }
-  return [];
-};
-
-const listings: React.FC = () => {
-  const { data: session } = useSession() as { data: any };
-  const userId = session?.user?.id || session?.user?.email;
-  
+const PropertyListings: React.FC = () => {
   const [listings, setListings] = useState<PropertyListing[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingListing, setEditingListing] = useState<PropertyListing | null>(null);
@@ -171,19 +138,6 @@ const listings: React.FC = () => {
 
   const isAnyModalOpen = showCreateModal || !!editingListing || !!viewingListing || !!deleteTarget;
   useBodyScrollLock(isAnyModalOpen);
-
-  // Load listings from localStorage on mount or when user changes
-  useEffect(() => {
-    const loadedListings = loadListingsFromStorage(userId);
-    setListings(loadedListings);
-  }, [userId]);
-
-  // Save listings to localStorage whenever they change
-  useEffect(() => {
-    if (listings.length >= 0) {
-      saveListingsToStorage(userId, listings);
-    }
-  }, [listings, userId]);
 
   const totalViews = useMemo(() => listings.reduce((sum, l) => sum + l.views, 0), [listings]);
   const totalInquiries = useMemo(() => listings.reduce((sum, l) => sum + l.inquiries, 0), [listings]);
@@ -203,7 +157,7 @@ const listings: React.FC = () => {
       views: 0,
       inquiries: 0,
       datePosted: new Date().toISOString(),
-      images: parseListInput(vals.images),
+      images: vals.images,
       amenities: parseListInput(vals.amenities),
       lookingFor: vals.lookingFor.trim(),
     };
@@ -226,7 +180,7 @@ const listings: React.FC = () => {
               bedrooms: Number(vals.bedrooms) || 0,
               bathrooms: Number(vals.bathrooms) || 0,
               status: vals.status,
-              images: parseListInput(vals.images),
+              images: vals.images,
               amenities: parseListInput(vals.amenities),
               lookingFor: vals.lookingFor.trim(),
             }
@@ -278,10 +232,6 @@ const listings: React.FC = () => {
     }
   };
 
-  const getPropertyTypeIcon = (type: PropertyListing["propertyType"]) => {
-    return <PropertyTypeIcon type={type} className="h-4 w-4" />;
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto">
@@ -331,7 +281,6 @@ const listings: React.FC = () => {
                 <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Listings</h1>
                 <p className="text-sm sm:text-base text-muted-foreground mt-1">
                   Create and manage your property listings
-                  {userId && <span className="ml-2 text-xs">({userId})</span>}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -357,7 +306,7 @@ const listings: React.FC = () => {
                 <p className="text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed">
                   Create your first property listing to start attracting potential roommates or tenants
                 </p>
-                <div className="bg-primary/5 rounded-lg p-4 mb-6 text-left border border-primary/10">
+                <div className="bg-primary/10 rounded-lg p-4 mb-6 text-left border border-primary/20">
                   <h3 className="font-medium text-foreground mb-2">You can list:</h3>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• Entire apartments/houses for rent</li>
@@ -473,7 +422,7 @@ const listings: React.FC = () => {
 
                         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
                           <div className="flex items-center">
-                            {getPropertyTypeIcon(listing.propertyType)}
+                            <PropertyTypeIcon type={listing.propertyType} className="h-4 w-4" />
                             <span className="ml-1 capitalize">
                               {listing.propertyType.replace("-", " ")}
                             </span>
@@ -569,7 +518,7 @@ const listings: React.FC = () => {
                 bedrooms: String(editingListing.bedrooms),
                 bathrooms: String(editingListing.bathrooms),
                 status: editingListing.status,
-                images: editingListing.images.join(", "),
+                images: editingListing.images,
                 amenities: editingListing.amenities.join(", "),
                 lookingFor: editingListing.lookingFor,
               }}
@@ -602,6 +551,86 @@ const listings: React.FC = () => {
           )}
         </div>
       </div>
+    </div>
+  );
+};
+
+const ImageUploader: React.FC<{
+  images: string[];
+  onChange: (images: string[]) => void;
+}> = ({ images, onChange }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            onChange([...images, event.target.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  };
+
+  const removeImage = (index: number) => {
+    onChange(images.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-2">Property Images</label>
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+        {images.map((img, index) => (
+          <div key={index} className="relative group">
+            <img
+              src={img}
+              alt={`Upload ${index + 1}`}
+              className="w-full h-32 object-cover rounded-lg border-2 border-border"
+            />
+            <button
+              type="button"
+              onClick={() => removeImage(index)}
+              className="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {index === 0 && (
+              <span className="absolute bottom-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                Cover
+              </span>
+            )}
+          </div>
+        ))}
+        
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full h-32 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center hover:border-primary hover:bg-primary/10 transition-colors group"
+        >
+          <Upload className="h-8 w-8 text-muted-foreground group-hover:text-primary mb-2" />
+          <span className="text-sm text-muted-foreground group-hover:text-primary">Upload Image</span>
+        </button>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      
+      <p className="text-xs text-muted-foreground">
+        Click to upload images from your device. First image will be used as cover.
+      </p>
     </div>
   );
 };
@@ -820,15 +849,10 @@ const ListingFormModal: React.FC<{
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-foreground">Images (URLs)</label>
-                <textarea
-                  value={vals.images}
-                  onChange={(e) => setField("images", e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-input px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="Paste image URLs separated by commas or new lines"
-                  rows={2}
+                <ImageUploader
+                  images={vals.images}
+                  onChange={(images) => setField("images", images)}
                 />
-                <p className="text-xs text-muted-foreground mt-1">First image will be used as the cover.</p>
               </div>
 
               <div className="sm:col-span-2">
@@ -1015,4 +1039,4 @@ const ConfirmDialog: React.FC<{
   );
 };
 
-export default listings;
+export default PropertyListings

@@ -1,3 +1,4 @@
+// app/api/profile/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
@@ -46,7 +47,6 @@ export async function GET() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Ensure user exists in database
     await ensureUserExists(session);
 
     const user = await prisma.user.findUnique({
@@ -62,6 +62,7 @@ export async function GET() {
         interests: true,
         location: true,
         profileImage: true,
+        image: true,
         preferences: true,
       },
     });
@@ -70,7 +71,13 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(normalizeProfile(user));
+    // Use profileImage if available, otherwise fall back to image
+    const result = normalizeProfile(user);
+    if (!result.profileImage && result.image) {
+      result.profileImage = result.image;
+    }
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json({ error: "Error fetching profile" }, { status: 500 });
@@ -87,21 +94,32 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    // Ensure user exists in database
     await ensureUserExists(session);
 
-    // Update the user with profile data from quiz
-    const data = {
-      name: body.name ?? undefined,
-      age: body.age ?? undefined,
-      gender: body.gender ?? undefined,
-      occupation: body.occupation ?? undefined,
-      bio: body.bio ?? undefined,
-      interests: Array.isArray(body.interests) ? body.interests : undefined,
-      location: body.location ?? undefined,
-      profileImage: body.profileImage ?? undefined,
-      preferences: body.preferences ?? undefined,
-    };
+    // Build update data object
+    const data: any = {};
+    
+    if (body.name !== undefined) data.name = body.name;
+    if (body.age !== undefined) data.age = Number(body.age);
+    if (body.gender !== undefined) data.gender = body.gender;
+    if (body.occupation !== undefined) data.occupation = body.occupation;
+    if (body.bio !== undefined) data.bio = body.bio;
+    if (Array.isArray(body.interests)) data.interests = body.interests;
+    if (body.location !== undefined) data.location = body.location;
+    if (body.preferences !== undefined) data.preferences = body.preferences;
+    
+    // Handle profile image - store in BOTH profileImage and image fields
+    if (body.profileImage !== undefined) {
+      if (typeof body.profileImage === 'string' && body.profileImage.trim() !== '') {
+        data.profileImage = body.profileImage;
+        data.image = body.profileImage; // Also update image field for compatibility
+      } else if (body.profileImage === '' || body.profileImage === null) {
+        data.profileImage = null;
+        data.image = null;
+      }
+    }
+
+    console.log('Creating/updating profile with data:', { ...data, bio: data.bio?.substring(0, 50) + '...' });
 
     const updatedProfile = await prisma.user.update({
       where: { email: session.user.email },
@@ -117,14 +135,21 @@ export async function POST(request: Request) {
         interests: true,
         location: true,
         profileImage: true,
+        image: true,
         preferences: true,
       },
     });
 
-    return NextResponse.json(normalizeProfile(updatedProfile), { status: 201 });
-  } catch (error) {
+    const result = normalizeProfile(updatedProfile);
+    console.log('Profile updated successfully, profileImage:', result.profileImage);
+    
+    return NextResponse.json(result, { status: 201 });
+  } catch (error: any) {
     console.error("Error creating profile:", error);
-    return NextResponse.json({ error: "Error creating profile" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Error creating profile", 
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -138,21 +163,32 @@ export async function PUT(request: Request) {
 
     const body = await request.json();
     
-    // Ensure user exists in database
     await ensureUserExists(session);
     
-    // Pick only the fields we allow to be updated
-    const data = {
-      name: body.name ?? undefined,
-      age: body.age ?? undefined,
-      gender: body.gender ?? undefined,
-      occupation: body.occupation ?? undefined,
-      bio: body.bio ?? undefined,
-      interests: Array.isArray(body.interests) ? body.interests : undefined,
-      location: body.location ?? undefined,
-      profileImage: body.profileImage ?? undefined,
-      preferences: body.preferences ?? undefined,
-    };
+    // Build update data object
+    const data: any = {};
+    
+    if (body.name !== undefined) data.name = body.name;
+    if (body.age !== undefined) data.age = Number(body.age);
+    if (body.gender !== undefined) data.gender = body.gender;
+    if (body.occupation !== undefined) data.occupation = body.occupation;
+    if (body.bio !== undefined) data.bio = body.bio;
+    if (Array.isArray(body.interests)) data.interests = body.interests;
+    if (body.location !== undefined) data.location = body.location;
+    if (body.preferences !== undefined) data.preferences = body.preferences;
+    
+    // Handle profile image - store in BOTH profileImage and image fields
+    if (body.profileImage !== undefined) {
+      if (typeof body.profileImage === 'string' && body.profileImage.trim() !== '') {
+        data.profileImage = body.profileImage;
+        data.image = body.profileImage; // Also update image field for compatibility
+      } else if (body.profileImage === '' || body.profileImage === null) {
+        data.profileImage = null;
+        data.image = null;
+      }
+    }
+
+    console.log('Updating profile with data:', { ...data, bio: data.bio?.substring(0, 50) + '...' });
 
     const updatedProfile = await prisma.user.update({
       where: { email: session.user.email },
@@ -168,15 +204,18 @@ export async function PUT(request: Request) {
         interests: true,
         location: true,
         profileImage: true,
+        image: true,
         preferences: true,
       },
     });
 
-    return NextResponse.json(normalizeProfile(updatedProfile));
+    const result = normalizeProfile(updatedProfile);
+    console.log('Profile updated successfully, profileImage:', result.profileImage);
+    
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error updating profile:", error);
     
-    // Check if it's a "record not found" error
     if (error.code === 'P2025') {
       return NextResponse.json(
         { error: "Profile not found. Please try refreshing the page." },
@@ -184,7 +223,10 @@ export async function PUT(request: Request) {
       );
     }
     
-    return NextResponse.json({ error: "Error updating profile" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Error updating profile", 
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -198,7 +240,6 @@ export async function PATCH(request: Request) {
 
     const quizData: QuizResponse = await request.json();
 
-    // Ensure user exists in database
     await ensureUserExists(session);
 
     const updatedProfile = await prisma.user.update({
@@ -229,13 +270,18 @@ export async function PATCH(request: Request) {
         interests: true,
         location: true,
         profileImage: true,
+        image: true,
         preferences: true,
       },
     });
 
-    return NextResponse.json(normalizeProfile(updatedProfile));
-  } catch (error) {
+    const result = normalizeProfile(updatedProfile);
+    return NextResponse.json(result);
+  } catch (error: any) {
     console.error("Error updating profile from quiz:", error);
-    return NextResponse.json({ error: "Error updating profile from quiz" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Error updating profile from quiz",
+      details: error.message 
+    }, { status: 500 });
   }
 }

@@ -15,7 +15,7 @@ model User {
   name             String
   email            String            @unique
   password         String?
-  image            String?
+  image            String?           @db.Text
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   listings         Listing[]
@@ -27,13 +27,13 @@ model User {
   age              Int?
   gender           String?
   occupation       String?
-  bio              String?
+  bio              String?           @db.Text
   interests        String[]          @default([])
   location         String?
-  profileImage     String?
+  profileImage     String?           @db.Text
   preferences      Json?
   
-  // Settings - ADD THIS
+  // Settings
   settings         Json?             @default("{}")
   
   // Location fields for nearby searches
@@ -45,7 +45,7 @@ model User {
 model Listing {
   id          Int      @id @default(autoincrement())
   title       String
-  description String
+  description String   @db.Text
   price       Float
   location    String
   createdAt   DateTime @default(now())
@@ -58,7 +58,7 @@ model Listing {
 model Review {
   id          Int      @id @default(autoincrement())
   rating      Int
-  comment     String
+  comment     String   @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -105,7 +105,7 @@ model RoommateMatch {
 model PremiumFeature {
   id          Int      @id @default(autoincrement())
   name        String
-  description String
+  description String   @db.Text
   price       Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -122,7 +122,7 @@ model Property {
   images         String[] @default([])
   beds           Int
   baths          Int
-  description    String
+  description    String   @db.Text
   amenities      String[] @default([])
   availableFrom  DateTime
   createdAt      DateTime @default(now())

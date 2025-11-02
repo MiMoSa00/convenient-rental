@@ -62,7 +62,7 @@ const ScrollRevealCard = ({ children, index, ...props }: any) => {
   return (
     <div
       ref={ref}
-      className={`bg-white border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 transition-all duration-700 hover:shadow-2xl transform hover:-translate-y-1 ${
+      className={`bg-card border border-border rounded-lg p-4 sm:p-5 md:p-6 transition-all duration-700 hover:shadow-[var(--shadow-elegant)] transform hover:-translate-y-1 ${
         isVisible 
           ? 'opacity-100 translate-y-0' 
           : 'opacity-0 translate-y-8'
@@ -411,10 +411,10 @@ const FindRoommatesContent = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-sm sm:text-base">Loading your roommate matches...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground text-sm sm:text-base">Loading your roommate matches...</p>
         </div>
       </div>
     );
@@ -453,22 +453,22 @@ const FindRoommatesContent = () => {
         }
       `}</style>
 
-      <div className="min-h-full bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="min-h-full bg-gradient-to-b from-background to-muted/30">
         {/* Enhanced Header Section */}
-        <div className="relative overflow-hidden border-b border-gray-200 bg-white backdrop-blur-sm">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 opacity-50"></div>
+        <div className="relative overflow-hidden border-b border-border bg-card backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 opacity-50"></div>
           
           <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-12">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
               <div className="space-y-2 sm:space-y-3 animate-fade-in-down">
-                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white backdrop-blur-sm rounded-full border border-purple-200 text-xs sm:text-sm text-gray-600">
-                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600 animate-pulse flex-shrink-0" />
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 text-xs sm:text-sm text-primary">
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse flex-shrink-0" />
                   <span className="whitespace-nowrap">AI-Powered Matching</span>
                 </div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent leading-tight">
                   Find Your Perfect Roommate
                 </h1>
-                <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl leading-relaxed">
+                <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl leading-relaxed">
                   {currentProfile ? 'Your personalized matches based on compatibility' : 'Create your profile to get started with intelligent matching'}
                 </p>
               </div>
@@ -476,14 +476,14 @@ const FindRoommatesContent = () => {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                 {currentProfile && (
                   <button 
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 hover:shadow-lg whitespace-nowrap"
+                    className="bg-muted hover:bg-muted/80 text-foreground px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 hover:shadow-lg whitespace-nowrap"
                     onClick={handleRetakeQuiz}
                   >
                     Retake Quiz
                   </button>
                 )}
                 <button 
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 hover:shadow-lg whitespace-nowrap"
+                  className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 hover:shadow-lg whitespace-nowrap"
                   onClick={handleCreateNewProfile}
                 >
                   {currentProfile ? 'Update Profile' : 'Create Profile'}
@@ -495,17 +495,17 @@ const FindRoommatesContent = () => {
 
         {/* Profile Status Section */}
         {currentProfile && (
-          <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-gray-200 bg-white backdrop-blur-sm animate-fade-in">
+          <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-border bg-card backdrop-blur-sm animate-fade-in">
             <div className="max-w-7xl mx-auto">
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 sm:p-5">
+              <div className="bg-gradient-to-r from-success/10 to-primary/10 border border-success/20 rounded-lg p-4 sm:p-5">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-start sm:items-center gap-3 w-full sm:w-auto">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-base sm:text-lg">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-primary-foreground font-bold flex-shrink-0 text-base sm:text-lg">
                       {currentProfile.occupation[0]}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-sm sm:text-base mb-1">Your Profile is Active</h3>
-                      <p className="text-xs sm:text-sm text-gray-600 break-words">
+                      <h3 className="font-semibold text-sm sm:text-base mb-1 text-foreground">Your Profile is Active</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground break-words">
                         <span className="inline-block">{currentProfile.age} years old</span>
                         <span className="mx-1">•</span>
                         <span className="inline-block">{currentProfile.occupation}</span>
@@ -515,10 +515,10 @@ const FindRoommatesContent = () => {
                     </div>
                   </div>
                   <div className="w-full sm:w-auto sm:text-right">
-                    <div className="text-xs sm:text-sm text-gray-500 mb-1">Profile Completion</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground mb-1">Profile Completion</div>
                     <div className="flex items-center gap-2">
                       <ProgressBar current={100} total={100} className="w-16 sm:w-20" />
-                      <span className="text-xs sm:text-sm font-medium text-green-600 whitespace-nowrap">100%</span>
+                      <span className="text-xs sm:text-sm font-medium text-success whitespace-nowrap">100%</span>
                     </div>
                   </div>
                 </div>
@@ -528,41 +528,41 @@ const FindRoommatesContent = () => {
         )}
 
         {/* Enhanced Stats Section */}
-        <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-gray-200 bg-white backdrop-blur-sm">
+        <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-border bg-card backdrop-blur-sm">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 animate-fade-in-up">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-5 md:p-6 rounded-lg border border-blue-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6 animate-fade-in-up">
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-lg border border-primary/20 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm text-blue-800 font-medium mb-1">Total Matches</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-blue-900">{filteredMatches.length}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs lg:text-sm text-primary font-medium mb-0.5 md:mb-1 truncate">Total Matches</p>
+                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-foreground">{filteredMatches.length}</p>
                   </div>
-                  <Users className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600 flex-shrink-0" />
+                  <Users className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 xl:h-10 xl:w-10 text-primary flex-shrink-0 ml-1 sm:ml-2" />
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-5 md:p-6 rounded-lg border border-green-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="bg-gradient-to-br from-success/10 to-success/5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-lg border border-success/20 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm text-green-800 font-medium mb-1">Messages</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-green-900">{stats.messages}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs lg:text-sm text-success font-medium mb-0.5 md:mb-1 truncate">Messages</p>
+                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-foreground">{stats.messages}</p>
                   </div>
-                  <div className="relative flex-shrink-0">
-                    <MessageSquare className="h-8 w-8 sm:h-10 sm:w-10 text-green-600" />
+                  <div className="relative flex-shrink-0 ml-1 sm:ml-2">
+                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 xl:h-10 xl:w-10 text-success" />
                     {stats.messages > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] sm:text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center animate-pulse font-medium">
+                      <div className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 bg-destructive text-destructive-foreground text-[7px] sm:text-[8px] md:text-[9px] lg:text-[10px] rounded-full h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 lg:h-5 lg:w-5 flex items-center justify-center animate-pulse font-medium">
                         {stats.messages > 9 ? '9+' : stats.messages}
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 sm:p-5 md:p-6 rounded-lg border border-red-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="bg-gradient-to-br from-destructive/10 to-destructive/5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-lg border border-destructive/20 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm text-red-800 font-medium mb-1">Saved Profiles</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-red-900">{stats.savedProfiles}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs lg:text-sm text-destructive font-medium mb-0.5 md:mb-1 truncate">Saved Profiles</p>
+                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-foreground">{stats.savedProfiles}</p>
                   </div>
-                  <Heart className="h-8 w-8 sm:h-10 sm:w-10 text-red-600 flex-shrink-0" />
+                  <Heart className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 xl:h-10 xl:w-10 text-destructive flex-shrink-0 ml-1 sm:ml-2" />
                 </div>
               </div>
             </div>
@@ -573,13 +573,13 @@ const FindRoommatesContent = () => {
         {!currentProfile && (
           <div className="p-4 sm:p-6 md:p-8 lg:p-12">
             <div className="max-w-7xl mx-auto">
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 sm:p-8 text-white text-center animate-scale-in">
+              <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-6 sm:p-8 text-primary-foreground text-center animate-scale-in">
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 leading-tight">Get Started with Your Roommate Profile</h2>
                 <p className="opacity-90 mb-4 sm:mb-6 text-sm sm:text-base md:text-lg">
                   Take our 5-minute compatibility quiz to find your perfect roommate matches
                 </p>
                 <button 
-                  className="bg-white text-purple-600 hover:bg-gray-100 px-6 sm:px-8 py-3 sm:py-4 rounded-lg transition-all duration-300 font-semibold text-sm sm:text-base md:text-lg hover:shadow-xl transform hover:scale-105"
+                  className="bg-card text-foreground hover:bg-muted px-6 sm:px-8 py-3 sm:py-4 rounded-lg transition-all duration-300 font-semibold text-sm sm:text-base md:text-lg hover:shadow-xl transform hover:scale-105"
                   onClick={handleCreateNewProfile}
                 >
                   Take Compatibility Quiz
@@ -591,20 +591,20 @@ const FindRoommatesContent = () => {
 
         {/* Enhanced Filters Section */}
         {currentProfile && matches.length > 0 && (
-          <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-gray-200 bg-white backdrop-blur-sm">
+          <div className="p-4 sm:p-6 md:p-8 lg:px-12 lg:py-6 border-b border-border bg-card backdrop-blur-sm">
             <div className="max-w-7xl mx-auto">
-              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-5 md:p-6 animate-fade-in">
+              <div className="bg-card rounded-lg border border-border p-4 sm:p-5 md:p-6 animate-fade-in">
                 <div className="flex items-center mb-3 sm:mb-4">
-                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mr-2 flex-shrink-0" />
-                  <h3 className="text-base sm:text-lg font-semibold">Filter Matches</h3>
+                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-primary mr-2 flex-shrink-0" />
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground">Filter Matches</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
                       Budget Range
                     </label>
                     <select 
-                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      className="w-full border border-border bg-card text-foreground rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       value={filters.budgetRange}
                       onChange={(e) => setFilters(prev => ({ ...prev, budgetRange: e.target.value }))}
                     >
@@ -616,11 +616,11 @@ const FindRoommatesContent = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
                       Age Range
                     </label>
                     <select 
-                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      className="w-full border border-border bg-card text-foreground rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       value={filters.ageRange}
                       onChange={(e) => setFilters(prev => ({ ...prev, ageRange: e.target.value }))}
                     >
@@ -632,11 +632,11 @@ const FindRoommatesContent = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
                       Occupation
                     </label>
                     <select 
-                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      className="w-full border border-border bg-card text-foreground rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       value={filters.occupation}
                       onChange={(e) => setFilters(prev => ({ ...prev, occupation: e.target.value }))}
                     >
@@ -648,11 +648,11 @@ const FindRoommatesContent = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
                       Compatibility
                     </label>
                     <select 
-                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      className="w-full border border-border bg-card text-foreground rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       value={filters.compatibility}
                       onChange={(e) => setFilters(prev => ({ ...prev, compatibility: e.target.value }))}
                     >
@@ -672,29 +672,29 @@ const FindRoommatesContent = () => {
         <div className="p-4 sm:p-6 md:p-8 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2 animate-fade-in">
-              <h2 className="text-xl sm:text-2xl font-bold break-words">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground break-words">
                 Your Matches {filteredMatches.length > 0 && `(${filteredMatches.length})`}
               </h2>
               {filteredMatches.length > 0 && (
-                <p className="text-xs sm:text-sm text-gray-600">
-                  Found <span className="font-semibold text-purple-600">{filteredMatches.length}</span> compatible matches
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Found <span className="font-semibold text-primary">{filteredMatches.length}</span> compatible matches
                 </p>
               )}
             </div>
             
             {!currentProfile ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center animate-fade-in">
-                <Users className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
-                <p className="text-lg sm:text-xl text-gray-600 mb-2">Create your profile to see roommate matches</p>
-                <p className="text-xs sm:text-sm text-gray-500">
+              <div className="bg-card rounded-lg border border-border p-8 sm:p-12 text-center animate-fade-in">
+                <Users className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                <p className="text-lg sm:text-xl text-foreground mb-2">Create your profile to see roommate matches</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Take our compatibility quiz to get personalized matches.
                 </p>
               </div>
             ) : filteredMatches.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center animate-fade-in">
-                <Users className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
-                <p className="text-lg sm:text-xl text-gray-600 mb-2">No matches found with current filters</p>
-                <p className="text-xs sm:text-sm text-gray-500">
+              <div className="bg-card rounded-lg border border-border p-8 sm:p-12 text-center animate-fade-in">
+                <Users className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                <p className="text-lg sm:text-xl text-foreground mb-2">No matches found with current filters</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Try adjusting your filters or retaking the quiz.
                 </p>
               </div>
@@ -702,72 +702,77 @@ const FindRoommatesContent = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {filteredMatches.map((match, index) => (
                   <ScrollRevealCard key={match.id} index={index}>
-                    <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
-                      <div className="flex items-start gap-3 w-full sm:flex-1 min-w-0">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg flex-shrink-0">
-                          {match.name[0]}
+                    <div className="flex flex-col gap-3 sm:gap-4">
+                      {/* Header Section */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-primary-foreground font-bold text-lg sm:text-xl shadow-lg flex-shrink-0">
+                            {match.name[0]}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-bold text-base sm:text-lg text-foreground break-words">
+                              {match.name}, {match.age}
+                            </h3>
+                            <p className="text-muted-foreground flex items-center text-xs sm:text-sm mt-1 break-words">
+                              <Building2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">{match.occupation}</span>
+                            </p>
+                            <p className="text-success font-semibold flex items-center text-xs sm:text-sm mt-1 break-words">
+                              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">{match.budget}</span>
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-bold text-base sm:text-lg break-words">
-                            {match.name}, {match.age}
-                          </h3>
-                          <p className="text-gray-600 flex items-center text-xs sm:text-sm mt-1 break-words">
-                            <Building2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-                            <span className="truncate">{match.occupation}</span>
-                          </p>
-                          <p className="text-green-600 font-semibold flex items-center text-xs sm:text-sm mt-1 break-words">
-                            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-                            <span className="truncate">{match.budget}</span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-left sm:text-right flex-shrink-0">
-                        <div className="flex items-center mb-1">
-                          <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 mr-1 flex-shrink-0" />
-                          <span className="text-xl sm:text-2xl font-bold text-green-600">
-                            {match.compatibility}%
-                          </span>
-                        </div>
-                        <div className="text-xs sm:text-sm text-gray-500">Match</div>
-                      </div>
-                    </div>
-                    
-                    <div className="mb-3 sm:mb-4 space-y-2">
-                      <div className="flex flex-wrap items-center text-xs sm:text-sm text-gray-600 gap-2">
-                        <div className="flex items-center">
-                          <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-                          <span className="break-words">{match.profile.location}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-                          <span className="whitespace-nowrap">{match.profile.moveInDate}</span>
+                        <div className="text-right flex-shrink-0">
+                          <div className="flex items-center mb-1">
+                            <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 mr-1 flex-shrink-0" />
+                            <span className="text-xl sm:text-2xl font-bold text-success">
+                              {match.compatibility}%
+                            </span>
+                          </div>
+                          <div className="text-xs sm:text-sm text-muted-foreground">Match</div>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {match.interests.map((interest, idx) => (
-                          <span
-                            key={idx}
-                            className="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap"
-                          >
-                            {interest}
-                          </span>
-                        ))}
+                      
+                      {/* Details Section */}
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center text-xs sm:text-sm text-muted-foreground gap-2 sm:gap-3">
+                          <div className="flex items-center min-w-0">
+                            <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                            <span className="truncate">{match.profile.location}</span>
+                          </div>
+                          <div className="flex items-center flex-shrink-0">
+                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                            <span className="whitespace-nowrap">{match.profile.moveInDate}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                          {match.interests.map((interest, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[10px] sm:text-xs bg-primary/10 text-primary px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-primary/20 whitespace-nowrap"
+                            >
+                              {interest}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <button
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 sm:py-2.5 rounded-lg transition-all duration-300 font-medium text-xs sm:text-sm"
-                        onClick={() => handleMessageClick(match)}
-                      >
-                        Message
-                      </button>
-                      <button
-                        className="px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 hover:border-red-300 group flex-shrink-0"
-                        onClick={() => handleSaveClick(match.id)}
-                      >
-                        <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 group-hover:text-red-500 transition-colors" />
-                      </button>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground py-2 sm:py-2.5 rounded-lg transition-all duration-300 font-medium text-xs sm:text-sm"
+                          onClick={() => handleMessageClick(match)}
+                        >
+                          Message
+                        </button>
+                        <button
+                          className="px-3 sm:px-4 py-2 sm:py-2.5 border border-border rounded-lg hover:bg-muted transition-all duration-300 hover:border-destructive group flex-shrink-0"
+                          onClick={() => handleSaveClick(match.id)}
+                        >
+                          <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-destructive transition-colors" />
+                        </button>
+                      </div>
                     </div>
                   </ScrollRevealCard>
                 ))}

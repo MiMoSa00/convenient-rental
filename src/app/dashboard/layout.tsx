@@ -5,7 +5,7 @@ import Image from "next/image";
 import * as NextAuth from "next-auth/react";
 import { useTheme } from "@/context/ThemeContext";
 import Sidebar from "@/components/Sidebar";
-import { X, Bell, ChevronRight, Sparkles } from "lucide-react";
+import { X, Bell, ChevronRight, Sparkles, Trash2, Users, MessageSquare } from "lucide-react";
 
 /* Inline fallback Moon & Sun icons */
 const Moon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -39,38 +39,84 @@ const Sun = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+interface Notification {
+  id: string;
+  type: 'message' | 'match' | 'system';
+  sender: string;
+  content: string;
+  timestamp: Date;
+  read: boolean;
+}
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { data: session } = NextAuth.useSession();
 
-  // Example messages data
-  const [messages] = useState([
-    {
-      id: "1",
-      sender: "Sarah Johnson",
-      content: "Hi! I'm interested in being roommates. Are you still looking?",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+  // Notifications state with localStorage persistence
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  // Load notifications from localStorage on mount
+  useEffect(() => {
+    const savedNotifications = localStorage.getItem('user_notifications');
+    if (savedNotifications) {
+      try {
+        const parsed = JSON.parse(savedNotifications);
+        setNotifications(parsed.map((n: any) => ({
+          ...n,
+          timestamp: new Date(n.timestamp)
+        })));
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    }
+  }, []);
+
+  // Save notifications to localStorage whenever they change
+  useEffect(() => {
+    if (notifications.length > 0) {
+      localStorage.setItem('user_notifications', JSON.stringify(notifications));
+    }
+  }, [notifications]);
+
+  // Function to add notification (can be called from anywhere in your app)
+  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: `notif_${Date.now()}_${Math.random()}`,
+      timestamp: new Date(),
       read: false,
-    },
-    {
-      id: "2",
-      sender: "Mike Chen",
-      content:
-        "Thanks for liking my roommate profile! Would love to chat about the apartment.",
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: "3",
-      sender: "Alex Rivera",
-      content:
-        "Hey, I saw your listing for the shared room. Is it still available?",
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      read: true,
-    },
-  ]);
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+  };
+
+  // Listen for custom events to add notifications
+  useEffect(() => {
+    const handleRoommateMatch = (event: any) => {
+      addNotification({
+        type: 'match',
+        sender: event.detail.name || 'New Match',
+        content: `You have a ${event.detail.compatibility || 90}% compatibility match with ${event.detail.name}!`,
+      });
+    };
+
+    const handleNewMessage = (event: any) => {
+      addNotification({
+        type: 'message',
+        sender: event.detail.sender || 'Someone',
+        content: event.detail.content || 'You have a new message',
+      });
+    };
+
+    window.addEventListener('roommate-match', handleRoommateMatch);
+    window.addEventListener('new-message', handleNewMessage);
+
+    return () => {
+      window.removeEventListener('roommate-match', handleRoommateMatch);
+      window.removeEventListener('new-message', handleNewMessage);
+    };
+  }, []);
 
   // Get user name and initials
   const [userName, setUserName] = useState<string>("User");
@@ -96,15 +142,64 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     .join("")
     .toUpperCase();
 
-  const unreadCount = messages.filter((m) => !m.read).length;
+  // Calculate unread count - only show if greater than 0
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Toggle notification panel
+  const toggleNotifications = () => {
+    setIsNotificationsOpen(!isNotificationsOpen);
+  };
+
+  // Clear all notifications
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    localStorage.removeItem('user_notifications');
+  };
+
+  // Mark notification as read
+  const markAsRead = (id: string) => {
+    setNotifications(prev =>
+      prev.map(notif =>
+        notif.id === id ? { ...notif, read: true } : notif
+      )
+    );
+  };
+
+  // Format timestamp
+  const formatTimestamp = (date: Date) => {
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+      return diffInMinutes < 1 ? 'Just now' : `${diffInMinutes}m ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return diffInDays === 1 ? 'Yesterday' : `${diffInDays}d ago`;
+    }
+  };
+
+  // Get notification icon
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'match':
+        return <Users className="h-4 w-4 sm:h-5 sm:w-5" />;
+      case 'message':
+        return <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />;
+      default:
+        return <Bell className="h-4 w-4 sm:h-5 sm:w-5" />;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Sticky header */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 supports-[backdrop-filter]:dark:bg-gray-900/60 border-b border-gray-200 dark:border-gray-800 transition-all duration-200">
-        <div className="h-16 pt-1 sm:pt-1 lg:pt-2 flex items-center justify-between px-3 sm:px-4 lg:px-8 max-w-7xl mx-auto text-gray-900 dark:text-white">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border transition-all duration-200">
+        <div className="h-16 pt-1 sm:pt-1 lg:pt-2 flex items-center justify-between px-3 sm:px-4 lg:px-8 max-w-7xl mx-auto">
           <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 min-w-0 flex-1">
-            {/* Sparkly Mobile Menu Button - Shows on mobile, hides on md+ */}
+            {/* Sparkly Mobile Menu Button */}
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
               className="md:hidden p-2 sm:p-2.5 rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group flex-shrink-0"
@@ -124,7 +219,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </button>
 
-            {/* Logo - Shows on md+, hides on mobile */}
+            {/* Logo */}
             <Link
               href="/dashboard"
               aria-label="Convenient Rental"
@@ -142,7 +237,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
 
             {/* Brand Text */}
-            <p className="ml-1 sm:ml-2 text-gray-700 dark:text-white leading-snug whitespace-nowrap overflow-hidden text-ellipsis text-xs sm:text-sm lg:text-base max-w-[10rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[26rem]">
+            <p className="ml-1 sm:ml-2 text-muted-foreground leading-snug whitespace-nowrap overflow-hidden text-ellipsis text-xs sm:text-sm lg:text-base max-w-[10rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[26rem]">
               We make house hunting worthwhile and easy, bringing you comfort and peace within your budget.....
             </p>
           </div>
@@ -153,7 +248,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onClick={() => {
                 toggleTheme();
               }}
-              className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-1.5 sm:p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
               aria-label="Toggle theme"
             >
               {theme === "light" ? (
@@ -166,13 +261,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Notifications Bell */}
             <div className="relative">
               <button
-                className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 relative rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                onClick={() => setIsNotificationsOpen(true)}
+                className="p-1.5 sm:p-2 text-muted-foreground hover:text-foreground relative rounded-lg hover:bg-muted transition-colors"
+                onClick={toggleNotifications}
                 aria-label="Notifications"
               >
                 <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4 bg-red-500 text-white text-[9px] sm:text-[10px] rounded-full flex items-center justify-center font-medium">
+                  <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4 bg-destructive text-destructive-foreground text-[9px] sm:text-[10px] rounded-full flex items-center justify-center font-medium animate-pulse">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -180,69 +275,113 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
               {/* Notifications Modal */}
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
-                  <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-                      Notifications
-                    </h3>
-                    <button
-                      onClick={() => setIsNotificationsOpen(false)}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                      aria-label="Close notifications"
-                    >
-                      <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                    </button>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto bg-white dark:bg-gray-900">
-                    {messages.length === 0 ? (
-                      <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                        <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No new notifications</p>
+                <>
+                  {/* Backdrop for mobile */}
+                  <div 
+                    className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+                    onClick={toggleNotifications}
+                  />
+                  
+                  {/* Notification Panel */}
+                  <div className="fixed md:absolute right-0 md:right-0 top-16 md:top-auto md:mt-2 w-full md:w-80 lg:w-96 max-w-md bg-card rounded-none md:rounded-lg shadow-xl border-t md:border border-border z-50 overflow-hidden max-h-[calc(100vh-4rem)] md:max-h-[32rem]">
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border bg-card sticky top-0 z-10">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm sm:text-base md:text-lg font-semibold text-foreground">
+                          Notifications
+                        </h3>
+                        {notifications.length > 0 && (
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                            {notifications.length}
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {messages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                              !message.read
-                                ? "bg-blue-50 dark:bg-blue-900/20"
-                                : ""
-                            }`}
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        {notifications.length > 0 && (
+                          <button
+                            onClick={clearAllNotifications}
+                            className="p-1.5 sm:p-2 hover:bg-muted rounded-lg transition-colors group"
+                            aria-label="Clear all notifications"
+                            title="Clear all"
                           >
-                            <div className="flex items-start space-x-3">
-                              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                {message.sender[0].toUpperCase()}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                    {message.sender}
-                                  </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap ml-2">
-                                    {message.timestamp.toLocaleDateString()}
-                                  </p>
+                            <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-destructive transition-colors" />
+                          </button>
+                        )}
+                        <button
+                          onClick={toggleNotifications}
+                          className="p-1.5 sm:p-2 hover:bg-muted rounded-lg transition-colors"
+                          aria-label="Close notifications"
+                        >
+                          <X className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Notifications List */}
+                    <div className="overflow-y-auto bg-card" style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+                      {notifications.length === 0 ? (
+                        <div className="p-6 sm:p-8 text-center text-muted-foreground">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                            <Bell className="h-6 w-6 sm:h-8 sm:w-8 opacity-50" />
+                          </div>
+                          <p className="text-sm sm:text-base font-medium mb-1">No notifications yet</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground/70">
+                            We'll notify you when something new happens
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-border">
+                          {notifications.map((notification) => (
+                            <div
+                              key={notification.id}
+                              onClick={() => markAsRead(notification.id)}
+                              className={`p-3 sm:p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
+                                !notification.read ? "bg-primary/5" : ""
+                              }`}
+                            >
+                              <div className="flex items-start gap-2 sm:gap-3">
+                                {/* Icon */}
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  notification.type === 'match' 
+                                    ? 'bg-success/10 text-success' 
+                                    : notification.type === 'message'
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'bg-accent/10 text-accent'
+                                }`}>
+                                  {getNotificationIcon(notification.type)}
                                 </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                                  {message.content}
-                                </p>
-                                {!message.read && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                                )}
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <p className="text-xs sm:text-sm font-semibold text-foreground truncate">
+                                      {notification.sender}
+                                    </p>
+                                    <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                                      {formatTimestamp(notification.timestamp)}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 break-words">
+                                    {notification.content}
+                                  </p>
+                                  {!notification.read && (
+                                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full mt-2"></div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
 
             {/* User Profile */}
             <div className="flex items-center space-x-1.5 sm:space-x-2">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-primary-foreground font-bold text-xs sm:text-sm flex-shrink-0">
                 {userInitials}
               </div>
               <span className="hidden sm:inline font-medium text-xs md:text-sm lg:text-base whitespace-nowrap truncate max-w-[5rem] md:max-w-[8rem] lg:max-w-[12rem]">
@@ -251,7 +390,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {session && (
                 <button
                   onClick={() => NextAuth.signOut({ callbackUrl: "/" })}
-                  className="ml-1 sm:ml-2 lg:ml-3 bg-red-500 text-white whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-2 sm:px-2.5 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-md sm:rounded-lg hover:bg-red-600 transition-colors"
+                  className="ml-1 sm:ml-2 lg:ml-3 bg-destructive text-destructive-foreground whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-2 sm:px-2.5 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-md sm:rounded-lg hover:bg-destructive/90 transition-colors"
                 >
                   Log Out
                 </button>
@@ -264,18 +403,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main area: sidebar and content */}
       <div className="flex min-h-[calc(100vh-4rem)]">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex w-64 shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+        <aside className="hidden md:flex w-64 shrink-0 bg-card border-r border-border">
           <div className="flex-1 p-4 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
             <Sidebar />
           </div>
         </aside>
 
-        {/* Mobile Sidebar with Smooth Slide Animation */}
+        {/* Mobile Sidebar */}
         {isMobileSidebarOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
-            {/* Overlay with fade animation */}
             <div
-              className="absolute inset-0 bg-black backdrop-blur-sm transition-opacity duration-300"
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
               style={{
                 opacity: isMobileSidebarOpen ? 0.5 : 0,
                 animation: 'fadeIn 0.2s ease-out',
@@ -283,25 +421,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onClick={() => setIsMobileSidebarOpen(false)}
             />
             
-            {/* Sidebar with slide animation */}
             <div
-              className="absolute left-0 top-0 h-full w-72 bg-white dark:bg-gray-900 shadow-xl text-gray-900 dark:text-gray-100 transition-transform duration-300 ease-out"
+              className="absolute left-0 top-0 h-full w-72 bg-card shadow-xl transition-transform duration-300 ease-out"
               style={{
                 transform: isMobileSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
               }}
             >
-              {/* Sidebar Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between p-4 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">RF</span>
+                  <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-lg flex items-center justify-center">
+                    <span className="text-primary-foreground font-bold text-sm">RF</span>
                   </div>
-                  <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  <span className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                     RoomieFinder
                   </span>
                 </div>
                 <button
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-all duration-200 group"
+                  className="p-2 rounded-lg hover:bg-muted transition-all duration-200 group"
                   onClick={() => setIsMobileSidebarOpen(false)}
                   aria-label="Close menu"
                 >
@@ -309,7 +445,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
 
-              {/* Sidebar Content */}
               <div className="p-4 h-[calc(100%-4rem)] overflow-y-auto">
                 <Sidebar onNavigate={() => setIsMobileSidebarOpen(false)} />
               </div>
@@ -319,7 +454,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Content area */}
         <div className="flex-1">
-          <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 text-gray-900 dark:text-gray-100">
+          <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
             {children}
           </main>
         </div>
