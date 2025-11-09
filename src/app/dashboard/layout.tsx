@@ -243,7 +243,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-6">
-            {/* Theme Toggle */}
+            {/* Theme Toggle - Shows Moon icon in light mode, Sun icon in dark mode */}
             <button
               onClick={() => {
                 toggleTheme();
@@ -251,10 +251,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               className="p-1.5 sm:p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
               aria-label="Toggle theme"
             >
-              {theme === "light" ? (
-                <Moon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
-              ) : (
+              {theme === "dark" ? (
                 <Sun className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
+              ) : (
+                <Moon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
               )}
             </button>
 

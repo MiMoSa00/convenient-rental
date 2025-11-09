@@ -128,13 +128,53 @@ const useBodyScrollLock = (isLocked: boolean) => {
   }, [isLocked]);
 };
 
-const PropertyListings: React.FC = () => {
+// localStorage key for storing listings
+const STORAGE_KEY = "property_listings";
+
+// Helper functions for localStorage
+const saveListingsToStorage = (listings: PropertyListing[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(listings));
+  } catch (error) {
+    console.error("Failed to save listings to localStorage:", error);
+  }
+};
+
+const loadListingsFromStorage = (): PropertyListing[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error("Failed to load listings from localStorage:", error);
+  }
+  return [];
+};
+
+const Listings: React.FC = () => {
+  // Load listings from localStorage on initial mount
   const [listings, setListings] = useState<PropertyListing[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingListing, setEditingListing] = useState<PropertyListing | null>(null);
   const [viewingListing, setViewingListing] = useState<PropertyListing | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PropertyListing | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const loadedListings = loadListingsFromStorage();
+    setListings(loadedListings);
+    setIsInitialized(true);
+  }, []);
+
+  // Save to localStorage whenever listings change (but skip initial load)
+  useEffect(() => {
+    if (isInitialized) {
+      saveListingsToStorage(listings);
+    }
+  }, [listings, isInitialized]);
 
   const isAnyModalOpen = showCreateModal || !!editingListing || !!viewingListing || !!deleteTarget;
   useBodyScrollLock(isAnyModalOpen);
@@ -1039,4 +1079,4 @@ const ConfirmDialog: React.FC<{
   );
 };
 
-export default PropertyListings
+export default Listings

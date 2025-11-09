@@ -10,7 +10,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Initialize theme from localStorage or system preference
+// Initialize theme from localStorage or default to light
 const getInitialTheme = (): Theme => {
   if (typeof window === 'undefined') return 'light';
   
@@ -22,13 +22,8 @@ const getInitialTheme = (): Theme => {
     return savedTheme;
   }
   
-  // Check system preference
-  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    console.log('System prefers dark mode');
-    return 'dark';
-  }
-  
-  console.log('Defaulting to light mode');
+  // Default to light theme (removed system preference check)
+  console.log('No saved theme found, defaulting to light mode');
   return 'light';
 };
 
@@ -78,21 +73,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(initialTheme);
     applyTheme(initialTheme);
     setIsInitialized(true);
-    
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      // Only follow system preference if no manual theme is saved
-      if (!localStorage.getItem('theme')) {
-        const newTheme = e.matches ? 'dark' : 'light';
-        console.log('System theme changed to:', newTheme);
-        setTheme(newTheme);
-        applyTheme(newTheme);
-      }
-    };
-    
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   const toggleTheme = () => {
