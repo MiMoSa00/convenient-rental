@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-  "vercel-build": "prisma generate && next build",
+    "vercel-build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint"
@@ -28,7 +28,7 @@
     "lucide-react": "^0.544.0",
     "mapbox-gl": "^3.14.0",
     "mongoose": "^8.18.0",
-    "next": "^16.0.0",
+    "next": "16.0.10",
     "next-auth": "^4.24.11",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
