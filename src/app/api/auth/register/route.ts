@@ -2,15 +2,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Prefer server-side env vars if present (don't rely only on NEXT_PUBLIC_...) to avoid accidental exposure
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Initialize Supabase client lazily to avoid build-time errors when env vars are missing
+let supabaseClient: ReturnType<typeof createClient> | null = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables (SUPABASE_URL/SUPABASE_ANON_KEY or NEXT_PUBLIC_ variants)');
+function getSupabaseClient() {
+  if (supabaseClient) {
+    return supabaseClient;
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ CRITICAL: Supabase environment variables missing (SUPABASE_URL / SUPABASE_ANON_KEY).');
+    throw new Error('Supabase environment variables are not configured.');
+  }
+
+  supabaseClient = createClient(supabaseUrl, supabaseKey);
+  return supabaseClient;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 interface RegisterRequest {
   email: string;
@@ -32,19 +42,22 @@ interface ApiResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
-    // Ensure Supabase env vars are available before continuing
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Supabase environment variables are missing in POST handler');
+    console.log('Registration endpoint called');
+
+    let supabase;
+    try {
+      supabase = getSupabaseClient();
+    } catch (err) {
+      console.error('Failed to initialize Supabase client:', err);
       return NextResponse.json(
         {
           success: false,
-          error: 'Server misconfiguration: missing Supabase environment variables',
+          error: 'Server misconfiguration: Supabase not configured',
           message: 'Server misconfiguration'
         },
         { status: 500 }
       );
     }
-    console.log('Registration endpoint called');
     
     const body: RegisterRequest = await request.json();
     const { email, password, name } = body;

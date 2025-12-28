@@ -2,15 +2,26 @@ import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client - prefer server-side env vars when available
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Initialize Supabase client lazily to avoid build-time errors when env vars are missing
+// This allows the build to succeed on Vercel even if env vars aren't set yet
+let supabaseClient: ReturnType<typeof createClient> | null = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Supabase env vars missing for auth provider (SUPABASE_URL / SUPABASE_ANON_KEY).');
+function getSupabaseClient() {
+  if (supabaseClient) {
+    return supabaseClient;
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ CRITICAL: Supabase environment variables missing (SUPABASE_URL / SUPABASE_ANON_KEY).');
+    throw new Error('Supabase environment variables are not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY.');
+  }
+
+  supabaseClient = createClient(supabaseUrl, supabaseKey);
+  return supabaseClient;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const authOptions: AuthOptions = {
   debug: process.env.NODE_ENV === 'development', // Enable debug in development
@@ -35,8 +46,8 @@ export const authOptions: AuthOptions = {
         try {
           console.log('=== AUTH ATTEMPT START ===');
           console.log('Email:', credentials.email);
-          console.log('Supabase URL:', supabaseUrl ? '✓ configured' : '✗ MISSING');
-          console.log('Supabase Key:', supabaseKey ? '✓ configured' : '✗ MISSING');
+
+          const supabase = getSupabaseClient();
 
           // Use Supabase Auth to sign in with email/password
           const { data, error } = await supabase.auth.signInWithPassword({
