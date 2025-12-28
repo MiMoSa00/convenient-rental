@@ -50,26 +50,62 @@ export default function RegisterForm() {
     try {
       console.log('Attempting registration for:', email);
 
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-        }),
-      });
+      // Use absolute URL to avoid issues with base href or proxies
+      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/api/auth/register`;
 
-      const data: ApiResponse = await response.json();
+      // Abort fetch after 10s to avoid long hangs
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Registration failed');
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            name,
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      // Log response info for debugging
+      console.log('Register response status:', response.status);
+      console.log('Register response content-type:', response.headers.get('content-type'));
+
+      // Parse JSON only if content-type indicates JSON
+      let data: ApiResponse | null = null;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        try {
+          data = (await response.json()) as ApiResponse;
+        } catch (parseError) {
+          console.error('Failed to parse JSON from register response:', parseError);
+          // Read the text for server logs but don't show raw HTML to user
+          const text = await response.text().catch(() => '');
+          console.error('Register response body (non-json):', text);
+          throw new Error(`Server returned invalid JSON (status ${response.status}). Check server logs.`);
+        }
+
+        if (!response.ok || !data?.success) {
+          throw new Error(data?.error || data?.message || 'Registration failed');
+        }
+      } else {
+        // Non-JSON response (likely an HTML error page). Log it and show friendly message.
+        const text = await response.text().catch(() => '');
+        console.error('Register returned non-JSON response:', { status: response.status, body: text });
+        throw new Error(`Server returned non-JSON response (status ${response.status}). Check server logs.`);
       }
 
       // Success
       console.log('Registration successful:', data);
+      setLoading(false);
       setSuccess(true);
 
       // Store user name in localStorage
@@ -85,7 +121,14 @@ export default function RegisterForm() {
     } catch (error) {
       console.error('Registration error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
-      setError(errorMessage);
+      // Provide clearer messages for common failure modes
+      if ((error as any)?.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else if (errorMessage.includes('Failed to fetch') || errorMessage.toLowerCase().includes('network')) {
+        setError('Network error: cannot reach the server. Is the dev server running?');
+      } else {
+        setError(errorMessage || 'Registration failed');
+      }
       setLoading(false);
     }
   };

@@ -2,11 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Prefer server-side env vars if present (don't rely only on NEXT_PUBLIC_...) to avoid accidental exposure
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables');
+  console.error('Missing Supabase environment variables (SUPABASE_URL/SUPABASE_ANON_KEY or NEXT_PUBLIC_ variants)');
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -31,6 +32,18 @@ interface ApiResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
+    // Ensure Supabase env vars are available before continuing
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase environment variables are missing in POST handler');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Server misconfiguration: missing Supabase environment variables',
+          message: 'Server misconfiguration'
+        },
+        { status: 500 }
+      );
+    }
     console.log('Registration endpoint called');
     
     const body: RegisterRequest = await request.json();
@@ -93,21 +106,38 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     });
 
     if (error) {
-      console.error('Supabase Auth error:', error.message);
+      // Log full error object for debugging (do not expose sensitive details to clients)
+      console.error('Supabase Auth error object:', error);
+
+      // Provide a clearer, non-sensitive message to the client for network/upstream failures
+      const errMsg = (error && (error.message || (error as any).msg)) || 'Registration failed';
+
+      // Detect common network-level failure message from fetch or node-fetch
+      if (typeof errMsg === 'string' && errMsg.toLowerCase().includes('fetch failed')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Unable to reach Supabase API (network or incorrect SUPABASE_URL).',
+            message: 'Upstream service unreachable'
+          },
+          { status: 502 }
+        );
+      }
+
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: error.message || 'Registration failed',
+          error: errMsg || 'Registration failed',
           message: 'Registration failed'
         },
         { status: 400 }
       );
     }
 
-    if (!data.user) {
-      console.error('No user returned from Supabase');
+    if (!data?.user) {
+      console.error('No user returned from Supabase (data):', data);
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: 'User creation failed - no user data returned',
           message: 'Registration failed'
@@ -129,7 +159,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         email: data.user.email!,
         name: name,
       },
-      message: requiresEmailVerification 
+      message: requiresEmailVerification
         ? 'User created successfully. Please check your email to verify your account.'
         : 'User created successfully',
       requiresEmailVerification

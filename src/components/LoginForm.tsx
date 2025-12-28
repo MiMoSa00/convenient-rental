@@ -30,7 +30,8 @@ export default function LoginForm() {
 
     try {
       console.log('Attempting login for:', email);
-      
+      console.log('Sending credentials to NextAuth...');
+
       // Sign in with NextAuth - this is all you need!
       const result = await signIn('credentials', {
         email,
@@ -38,10 +39,16 @@ export default function LoginForm() {
         redirect: false,
       });
 
-      console.log('SignIn result:', result);
+      console.log('Full signIn response:', {
+        ok: result?.ok,
+        error: result?.error,
+        status: result?.status,
+        url: result?.url,
+      });
 
       if (result?.error) {
-        console.error('Login error:', result.error);
+        console.error('Login failed with error:', result.error);
+        console.error('Full result object:', result);
         
         // Better error messages
         if (result.error === 'CredentialsSignin') {

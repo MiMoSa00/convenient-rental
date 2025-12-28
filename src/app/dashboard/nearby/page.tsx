@@ -105,11 +105,18 @@ export default function NearbyPage() {
         },
         (error) => {
           console.error("Geolocation error:", error);
-          if (error.code === error.PERMISSION_DENIED) {
+          // Safely access error properties - error might be undefined or missing code
+          const errorCode = error?.code;
+          const permissionDenied = 1; // GeolocationPositionError.PERMISSION_DENIED
+          const positionUnavailable = 2; // GeolocationPositionError.POSITION_UNAVAILABLE
+          
+          if (errorCode === permissionDenied) {
             setLocationPermission("denied");
             setError("Please enable location access to see nearby properties and roommates.");
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
+          } else if (errorCode === positionUnavailable) {
             setError("Location information is unavailable. Please try again.");
+          } else if (errorCode === 3) {
+            setError("Location request timed out. Please try again.");
           } else {
             setError("Unable to retrieve your location. Please try again.");
           }

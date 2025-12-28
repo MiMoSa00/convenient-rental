@@ -2,11 +2,15 @@ import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Initialize Supabase client - prefer server-side env vars when available
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Supabase env vars missing for auth provider (SUPABASE_URL / SUPABASE_ANON_KEY).');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const authOptions: AuthOptions = {
   debug: process.env.NODE_ENV === 'development', // Enable debug in development
@@ -24,41 +28,50 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log('Missing email or password');
+          console.error('Missing email or password in authorize');
           return null;
         }
 
         try {
-          console.log('Attempting Supabase auth for:', credentials.email);
-          
-          // Use Supabase Auth instead of Prisma
+          console.log('=== AUTH ATTEMPT START ===');
+          console.log('Email:', credentials.email);
+          console.log('Supabase URL:', supabaseUrl ? '✓ configured' : '✗ MISSING');
+          console.log('Supabase Key:', supabaseKey ? '✓ configured' : '✗ MISSING');
+
+          // Use Supabase Auth to sign in with email/password
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           });
 
           if (error) {
-            console.error('Supabase auth error:', error.message);
+            // Log full error for server-side debugging
+            console.error('❌ Supabase signIn failed');
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            console.error('Full error object:', JSON.stringify(error, null, 2));
+            // Return null so NextAuth responds with CredentialsSignin
             return null;
           }
 
-          if (!data.user) {
-            console.error('No user returned from Supabase');
+          if (!data?.user) {
+            console.error('⚠️ No user returned from Supabase during signIn. Data:', data);
             return null;
           }
 
-          console.log('Supabase auth successful for user:', data.user.id);
+          console.log('✅ Supabase auth successful for user:', data.user.id);
+          console.log('=== AUTH ATTEMPT END ===');
 
           // Return user object for NextAuth
           return {
             id: data.user.id,
             email: data.user.email!,
-            name: data.user.user_metadata?.name || 
-                  data.user.user_metadata?.full_name || 
+            name: data.user.user_metadata?.name ||
+                  data.user.user_metadata?.full_name ||
                   data.user.email!.split('@')[0],
           };
-        } catch (error) {
-          console.error("Authorization error:", error);
+        } catch (err) {
+          console.error('❌ Authorization exception:', err);
           return null;
         }
       },
